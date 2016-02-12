@@ -82,14 +82,19 @@ const ConsoleCommandInput = React.createClass({
 		return (
 			<div className="chcp-consolecommandinput">
 				<form onSubmit={ this.handleSubmit } className="chcp-consolecommandinput-form">
-					<input type="text" className="chcp-consolecommandinput-input"
-						placeholder="Command"
-						value={ this.state.text }
-						onChange={ this.handleCommandChange }
-					/>
-					<input type="submit"
-						value="Send"
-					/>
+					<div className="input-group">
+						<input type="text" className="chcp-consolecommandinput-input form-control"
+							placeholder="Command"
+							value={ this.state.text }
+							onChange={ this.handleCommandChange }
+						/>
+						<div className="input-group-btn">
+							<input type="submit"
+								value="Send"
+								className="btn btn-primary"
+							/>
+						</div>
+					</div>
 				</form>
 			</div>
 		)
@@ -124,16 +129,73 @@ const Stats = React.createClass({
 	},
 
 	render() {
+		// let coverClassNames = classNames( 'chcp-stats-servercontrols-cover', 'fade', {
+		// 	'in': !! this.props.currentServerAction
+		// });
+
+		let startButtonClassNames = classNames( 'btn', 'btn-block', 'btn-success', {
+			'disabled': !! this.props.currentServerAction
+		});
+
+		let restartButtonClassNames = classNames( 'btn', 'btn-block', 'btn-warning', {
+			'disabled': !! this.props.currentServerAction
+		});
+
+		let stopButtonClassNames = classNames( 'btn', 'btn-block', 'btn-danger', {
+			'disabled': !! this.props.currentServerAction
+		});
+
 		// Obviously very FPO.
 		return (
 			<div className="chcp-stats">
-				<div>RAM: { this.getFractionOf( this.props.stats.ram ) * 100 << 0 }%</div>
-				<div>CPU: { this.getFractionOf( this.props.stats.cpu ) * 100 << 0 }%</div>
-				<div>HDD: { this.getFractionOf( this.props.stats.hdd ) * 100 << 0 }%</div>
-				<div>{ this.props.players.join( ', ' ) }</div>
+				<div className="chcp-stats-stats">
+					{/*<div>RAM: { this.getFractionOf( this.props.stats.ram ) * 100 << 0 }%</div>
+					<div>CPU: { this.getFractionOf( this.props.stats.cpu ) * 100 << 0 }%</div>
+					<div>HDD: { this.getFractionOf( this.props.stats.hdd ) * 100 << 0 }%</div>*/}
+					<div>{ this.props.players.join( ', ' ) || "(Nobody on!)" }</div>
+				</div>
+				<div className="chcp-stats-servercontrols">
+					{/*<div className={ coverClassNames }>
+						<span>{ this.coverMessage() }</span>
+					</div>*/}
+					<div data-action="start"
+						onClick={ this.handleServerButtonClick }
+						className={ startButtonClassNames }
+						>Start Server</div>
+					<div data-action="restart"
+						onClick={ this.handleServerButtonClick }
+						className={ restartButtonClassNames }
+						>Restart Server</div>
+					<div data-action="stop"
+						onClick={ this.handleServerButtonClick }
+						className={ stopButtonClassNames }
+						>Stop Server</div>
+				</div>
 			</div>
 		);
-	}
+	},
+
+	handleServerButtonClick( event ) {
+		let action = event.target.getAttribute( 'data-action' );
+
+		if( action ) {
+			this.props.onServerPowerAction( action );
+		}
+	},
+
+	// coverMessage() {
+	// 	if( ! this.props.currentServerAction ) {
+	// 		return '';
+	// 	}
+
+	// 	let action = this.props.currentServerAction.action;
+
+	// 	return ({
+	// 		'start': `Server is starting...`,
+	// 		'stop': `Server is being stopped...`,
+	// 		'restart': `Server is being restarted...`
+	// 	}[ action ] || `Server is doing something...` );
+	// }
 });
 
 
@@ -143,11 +205,14 @@ const Stats = React.createClass({
 const ServerSelect = React.createClass({
 	getInitialState() {
 		return {
-			currentServer: this.props.currentServer
+			currentServer: this.props.currentServer,
+			addingServer: false
 		};
 	},
 
 	render() {
+		let addButtonClassNames = classNames( 'btn', 'btn-secondary' );
+
 		let chooseButtonClassNames = classNames( 'btn', 'btn-primary', {
 			'disabled': ! this.props.servers.length || this.state.currentServer == -1
 		});
@@ -160,12 +225,22 @@ const ServerSelect = React.createClass({
 					</ul>
 				</div>
 				<div className="chcp-serverselect-controls">
-					<button type="button"
-						className={ chooseButtonClassNames }
-						onClick={ this.handleChooseClick }
-						>
-						Choose Server
-					</button>
+					<div className="controlsgroup controlsgroup-left">
+						<button type="button"
+							className={ addButtonClassNames }
+							onClick={ this.handleAddClick }
+							>
+							Add Server
+						</button>
+					</div>
+					<div className="controlsgroup controlsgroup-right">
+						<button type="button"
+							className={ chooseButtonClassNames }
+							onClick={ this.handleChooseClick }
+							>
+							Choose Server
+						</button>
+					</div>
 				</div>
 			</div>
 		);
@@ -180,26 +255,41 @@ const ServerSelect = React.createClass({
 
 		return this.props.servers.map( ( server, i ) => {
 			let optionClassNames = classNames({
-				'selected': i == this.state.currentServer
+				'active': i == this.state.currentServer
+			});
+
+			let buttonClassNames = classNames( 'btn', 'btn-secondary', 'btn-block', {
+				'active': i == this.state.currentServer
 			});
 
 			return (
 				<li key={ i }
+					data-server={ i }
 					classNames={ optionClassNames }
-					onClick={ this.handleOptionClick }
 					>
-					{ server.title }
+					<button type="button"
+						data-server={ i }
+						className={ buttonClassNames }
+						onClick={ this.handleOptionClick }
+						>{ server.title }</button>
 				</li>
 			);
 		});
 	},
 
 	handleOptionClick( event ) {
-		this.setState({ currentServer: parseInt( event.target.getAttribute( 'key' ), 10 ) });
+		this.setState({ currentServer: parseInt( event.target.getAttribute( 'data-server' ), 10 ) });
 	},
 
 	handleChooseClick( event ) {
 		this.props.onSelect( this.state.currentServer );
+	},
+
+	handleAddClick( event ) {
+		// this.props.onSelect( this.state. )
+		console.log( 'Show Add Server' );
+
+		this.setState({ addingServer: true });
 	}
 });
 
@@ -261,13 +351,18 @@ const Panel = React.createClass({
 	renderServerPanel() {
 		return ([
 			<Console log={ this.state.log } onCommand={ this.handleConsoleCommand }/>,
-			<Stats stats={ this.getOSStats() } players={ this.state.players }/>
+			<Stats
+				stats={ this.getOSStats() }
+				players={ this.state.players }
+				currentServerAction={ this.state.currentServerAction }
+				onServerPowerAction={ this.handleServerPowerAction }
+				/>
 		]);
 	},
 
 	connectIPC() {
 		ipc.on( 'panel-model-update', this.updateStateFromPanelModel );
-		ipc.send( 'panel-model-request' );
+		ipc.send( 'panel-action', 'model-request', {} );
 	},
 
 	updateStateFromPanelModel( event, model ) {
@@ -275,7 +370,7 @@ const Panel = React.createClass({
 	},
 
 	handleConsoleCommand( command ) {
-		ipc.send( 'panel-command', command );
+		ipc.send( 'panel-action', 'send-console-command', { command } );
 	},
 
 	handleServerSelect( serverSelection ) {
@@ -283,7 +378,11 @@ const Panel = React.createClass({
 		// then tell the controller
 		// then wait for an update from the controller.
 		this.setState({ currentServer: serverSelection });
-		ipc.send( 'panel-server-select', serverSelection );
+		ipc.send( 'panel-action', 'select-server', { serverSelection } );
+	},
+
+	handleServerPowerAction( action ) {
+		ipc.send( 'panel-action', 'power-server', { action } );
 	}
 });
 

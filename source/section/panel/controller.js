@@ -18,10 +18,9 @@ import appSettings from 'app-settings';
 export default function PanelController() {
 	this.getId = makeIdGetter();
 
-	this._onPanelModelRequest = this.onPanelModelRequest.bind( this );
-	this._onPanelCommand = this.onPanelCommand.bind( this );
-	this._onPanelServerSelect = this.onPanelServerSelect.bind( this );
+	this._onPanelAction = this.onPanelAction.bind( this );
 
+	this.initPanelActionHandlers();
 	this.initState();
 	this.initInfo();
 	this.initWindow();
@@ -33,6 +32,24 @@ inherits( PanelController, EventEmitter );
 
 Object.assign( PanelController.prototype, {
 	getId: null,
+
+	initPanelActionHandlers() {
+		this.panelActionHandlers = {
+			'select-server': ( params ) => {
+				this.setState({ currentServer: params.serverSelection });
+			},
+			'send-console-command': ( params ) => {
+				console.log( 'Received command:', JSON.stringify( parameters.command ) );
+			},
+			'model-request': () => {
+				this.sendPanelModelUpdate();
+			},
+			'power-server': ( params ) => {
+				// console.log( `Received server power command: ${ params.action }`)
+				this.performServerAction( params );
+			}
+		};
+	},
 
 	loadSettings() {
 		appSettings.readServers( ( error, servers ) => {
@@ -52,6 +69,7 @@ Object.assign( PanelController.prototype, {
 		this.state = {
 			log: [],
 			players: [],
+			playersLoaded: false,
 			// Percent. (0.0 ~ 100.0)
 			cpu: { free: 0, used: 0, total: 0 },
 			// Gigs
@@ -60,7 +78,8 @@ Object.assign( PanelController.prototype, {
 			hdd: { free: 0, used: 0, total: 0 },
 			currentServer: -1,
 			servers: [],
-			serversLoaded: false
+			serversLoaded: false,
+			currentServerAction: null
 		};
 	},
 
@@ -72,10 +91,18 @@ Object.assign( PanelController.prototype, {
 
 		this.info = new ServerInfoWatcher( null, {
 			'consoleRead': [ '2 seconds',  ( res ) => {
-					return {
-						log: res.log.split( /\r\n|\r|\n/ ).filter( s => !!s )
-					};
-				}],
+				return {
+					log: res.log.split( /\r\n|\r|\n/ ).filter( s => !!s )
+				};
+			}],
+
+			'playersList': [ '5 seconds', ( res ) => {
+				return {
+					// method: res.method,
+					playersLoaded: true,
+					players: res.players
+				};
+			}]
 
 			// 'osGetRAM': [ '5 seconds', statHandler( 'ram' ) ],
 			// 'osGetCPU': [ '5 seconds', statHandler( 'cpu' ) ],
@@ -84,35 +111,6 @@ Object.assign( PanelController.prototype, {
 
 		this.info.on( 'data', this.onInfoData.bind( this ) );
 		this.info.on( 'error', this.onInfoError.bind( this ) );
-	},
-
-	initWindow() {
-		let win = this.window = new BrowserWindow({ width: 1024 });
-		win.loadURL( `file://${ __dirname }/index.html?id=${ this.getId() }` );
-		win.webContents.openDevTools();
-
-		win.on( 'closed', () => {
-			this.close();
-		});
-
-		ipc.on( 'panel-model-request', this._onPanelModelRequest );
-		ipc.on( 'panel-command', this._onPanelCommand );
-		ipc.on( 'panel-server-select', this._onPanelServerSelect );
-	},
-
-	onPanelModelRequest( event ) {
-		if( event.sender != this.window.webContents ) return;
-		this.sendPanelModelUpdate();
-	},
-
-	onPanelCommand( event, command ) {
-		if( event.sender != this.window.webContents ) return;
-		console.log( 'Received command:', JSON.stringify( command ) );
-	},
-
-	onPanelServerSelect( event, serverSelection ) {
-		if( event.sender != this.window.webContents ) return;
-		this.setState({ currentServer: serverSelection });
 	},
 
 	onInfoData( data ) {
@@ -124,9 +122,38 @@ Object.assign( PanelController.prototype, {
 		console.warn( error );
 	},
 
+	initWindow() {
+		let win = this.window = new BrowserWindow({ width: 1024 });
+		win.loadURL( `file://${ __dirname }/index.html?id=${ this.getId() }` );
+		// win.webContents.openDevTools();
+
+		win.on( 'closed', () => {
+			this.close();
+		});
+
+		ipc.on( 'panel-action', this._onPanelAction );
+	},
+
+	onPanelAction( event, action, parameters ) {
+		if( event.sender != this.window.webContents ) return;
+
+		parameters = parameters || {};
+
+		console.log( `Received Panel Action: ${ action }, ${ JSON.stringify( parameters ) }` );
+
+		let selectedHandler = this.panelActionHandlers[ action ];
+
+		if( ! selectedHandler ) {
+			console.warn( `panel/controller#onPanelAction: Received action with no handler: '${ action }'` );
+			return;
+		}
+
+		selectedHandler.call( this, parameters );
+	},
+
 	setState( newState ) {
 		let oldState = this.state;
-		let serversJustLoaded = (newState.serversLoaded && ! oldState.serversLoaded);
+		// let serversJustLoaded = (newState.serversLoaded && ! oldState.serversLoaded);
 
 		this.state = Object.assign( {}, this.state, newState );
 
@@ -137,18 +164,49 @@ Object.assign( PanelController.prototype, {
 		// Updates.
 
 		this.sendPanelModelUpdate();
+		this.conditionallySaveServers( oldState, this.state );
+		this.updateInfoAPI( oldState, this.state );
 
-		if( ! serversJustLoaded && ! deepEqual( oldState.servers, this.state.servers ) ) {
+		// if( ! serversJustLoaded && ! deepEqual( oldState.servers, this.state.servers ) ) {
+		// 	this.saveServers();
+		// }
+
+		// if( oldState.currentServer !== this.state.currentServer ) {
+		// 	if( this.state.currentServer === -1 ) {
+		// 		this.info.stop();
+		// 		this.info.api = null;
+		// 	}
+		// 	else {
+		// 		let newServer = this.state.servers[ this.state.currentServer ];
+
+		// 		this.info.stop();
+		// 		this.info.api = new ServerInfoAPI({
+		// 			credentials: {
+		// 				key: newServer.key,
+		// 				secret: newServer.secret
+		// 			}
+		// 		});
+		// 		this.info.start();
+		// 	}
+		// }
+	},
+
+	conditionallySaveServers( oldState, currState ) {
+		let serversJustLoaded = (currState.serversLoaded && ! oldState.serversLoaded);
+
+		if( ! serversJustLoaded && ! deepEqual( oldState.servers, currState.servers ) ) {
 			this.saveServers();
 		}
+	},
 
-		if( oldState.currentServer !== this.state.currentServer ) {
-			if( this.state.currentServer === -1 ) {
+	updateInfoAPI( oldState, currState ) {
+		if( oldState.currentServer !== currState.currentServer ) {
+			if( currState.currentServer === -1 ) {
 				this.info.stop();
 				this.info.api = null;
 			}
 			else {
-				let newServer = this.state.servers[ this.state.currentServer ];
+				let newServer = currState.servers[ currState.currentServer ];
 
 				this.info.stop();
 				this.info.api = new ServerInfoAPI({
@@ -170,9 +228,45 @@ Object.assign( PanelController.prototype, {
 		this.window.webContents.send( 'panel-model-update', this.state );
 	},
 
+	performServerAction( params ) {
+		if( ! this.info.api ) {
+			console.warn( `Trying to tell server to ${ params.action } with no api.  (Are we offline?)` );
+			return;
+		}
+
+		let apiActions = {
+			'start': 'serverStart',
+			'stop': 'serverStop',
+			'restart': 'serverRestart'
+		};
+
+		let selectedAPIAction = apiActions[ params.action ];
+
+		if( ! selectedAPIAction ) {
+			console.warn( `No API Action for server action '${ params.action }'.` );
+			return;
+		}
+
+		this.info.api[ selectedAPIAction ]( ( error ) => {
+			if( error ) {
+				console.error( `Encountered error trying to ${ params.action } the server:` );
+				console.error( error );
+				return;
+			}
+
+			this.setState({
+				currentServerAction: null
+			});
+		});
+
+		this.setState({
+			currentServerAction: params
+		});
+	},
+
 	close() {
-		ipc.removeListener( 'panel-model-request', this._onPanelModelRequest );
-		ipc.removeListener( 'panel-command', this._onPanelCommand );
+		// ipc.removeListener( 'panel-model-request', this._onPanelModelRequest );
+		ipc.removeListener( 'panel-action', this._onPanelAction );
 
 		this.info.stop();
 		this.info.removeAllListeners();

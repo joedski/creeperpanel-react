@@ -11,3 +11,13 @@ TODO
 ----
 
 - [Online/Offline detection](http://electron.atom.io/docs/v0.36.7/tutorial/online-offline-events/)
+
+
+
+Other Notes
+-----------
+
+- If a MC instance is not running, calls to it for, say, the console log will return an unsuccessful API call with the message "Server is not running."  The raw response is:
+	- `{"status":"error","message":"Server is not running","code":62,"endPoint":"atlanta-api"}`
+	- This seems like a possible way to determine if the server is running or not.
+	- I don't know if it's always code 62, though, so checking the message may be better.  Or not.  Who knows.
