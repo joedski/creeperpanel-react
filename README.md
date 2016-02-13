@@ -11,6 +11,7 @@ TODO
 ----
 
 - [Online/Offline detection](http://electron.atom.io/docs/v0.36.7/tutorial/online-offline-events/)
+- Refactor to Flux style architecture, or at least something more resembling Elm.  Basically just Action, Dispatch, Store, View.
 
 
 
