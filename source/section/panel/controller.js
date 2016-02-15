@@ -4,6 +4,8 @@
 import EventEmitter from 'events';
 import { inherits } from 'util';
 
+import uuid from 'uuid';
+
 import electron, { BrowserWindow, ipcMain as ipc } from 'electron';
 
 import { makeGetter as makeIdGetter } from 'app-util/id-getter';
@@ -47,6 +49,16 @@ Object.assign( PanelController.prototype, {
 			'power-server': ( params ) => {
 				// console.log( `Received server power command: ${ params.action }`)
 				this.performServerAction( params );
+			},
+			'add-server': ( params ) => {
+				// Guaranteeing server ids exist should probably be more rigorous...
+				let server = Object.assign( {}, params.server, {
+					id: uuid.v4()
+				});
+
+				this.setState({
+					servers: this.state.servers.concat([ server ])
+				});
 			}
 		};
 	},
@@ -131,7 +143,7 @@ Object.assign( PanelController.prototype, {
 			this.close();
 		});
 
-		ipc.on( 'panel-action', this._onPanelAction );
+		ipc.on( 'ui-action', this._onPanelAction );
 	},
 
 	onPanelAction( event, action, parameters ) {
@@ -166,29 +178,6 @@ Object.assign( PanelController.prototype, {
 		this.sendPanelModelUpdate();
 		this.conditionallySaveServers( oldState, this.state );
 		this.updateInfoAPI( oldState, this.state );
-
-		// if( ! serversJustLoaded && ! deepEqual( oldState.servers, this.state.servers ) ) {
-		// 	this.saveServers();
-		// }
-
-		// if( oldState.currentServer !== this.state.currentServer ) {
-		// 	if( this.state.currentServer === -1 ) {
-		// 		this.info.stop();
-		// 		this.info.api = null;
-		// 	}
-		// 	else {
-		// 		let newServer = this.state.servers[ this.state.currentServer ];
-
-		// 		this.info.stop();
-		// 		this.info.api = new ServerInfoAPI({
-		// 			credentials: {
-		// 				key: newServer.key,
-		// 				secret: newServer.secret
-		// 			}
-		// 		});
-		// 		this.info.start();
-		// 	}
-		// }
 	},
 
 	conditionallySaveServers( oldState, currState ) {
@@ -225,7 +214,7 @@ Object.assign( PanelController.prototype, {
 	},
 
 	sendPanelModelUpdate() {
-		this.window.webContents.send( 'panel-model-update', this.state );
+		this.window.webContents.send( 'model-update', this.state );
 	},
 
 	performServerAction( params ) {
@@ -266,7 +255,7 @@ Object.assign( PanelController.prototype, {
 
 	close() {
 		// ipc.removeListener( 'panel-model-request', this._onPanelModelRequest );
-		ipc.removeListener( 'panel-action', this._onPanelAction );
+		ipc.removeListener( 'ui-action', this._onPanelAction );
 
 		this.info.stop();
 		this.info.removeAllListeners();

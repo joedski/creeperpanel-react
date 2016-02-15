@@ -1,5 +1,8 @@
 // View code for Panel.
 
+// import EventEmitter from 'events';
+// import { inherits } from 'util';
+
 import React from 'react';
 import ReactDOM from 'react-dom';
 import classNames from 'classnames';
@@ -206,7 +209,7 @@ const ServerSelect = React.createClass({
 	getInitialState() {
 		return {
 			currentServer: this.props.currentServer,
-			addingServer: false
+			// addingServer: false
 		};
 	},
 
@@ -286,10 +289,115 @@ const ServerSelect = React.createClass({
 	},
 
 	handleAddClick( event ) {
-		// this.props.onSelect( this.state. )
-		console.log( 'Show Add Server' );
+		this.props.onWantToAddServer();
+	}
+});
 
-		this.setState({ addingServer: true });
+////
+
+const ServerAdd = React.createClass({
+	getInitialState() {
+		return {
+			serverTitle: '',
+			serverKey: '',
+			serverSecret: ''
+		};
+	},
+
+	render() {
+		let cancelButtonClassNames = classNames( 'btn', 'btn-warning' );
+
+		let addButtonClassNames = classNames( 'btn', 'btn-success', {
+			'disabled': ! this.allValuesFilled()
+		});
+
+		return (
+			<div className="chcp-serverselect">
+				<div className="chcp-serverselect-addform">
+					<fieldset className="form-group">
+						<label htmlFor="input-server-title">Server Title</label>
+						<input type="text" id="input-server-title" className="form-control"
+							placeholder="The Best Server in the Universe..."
+							onChange={ this.handleServerTitleChange }
+							/>
+					</fieldset>
+					<fieldset className="form-group">
+						<label htmlFor="input-server-key">API Key</label>
+						<input type="text" id="input-server-key" className="form-control"
+							placeholder="...@Instance.playat.ch"
+							onChange={ this.handleServerKeyChange }
+							/>
+					</fieldset>
+					<fieldset className="form-group">
+						<label htmlFor="input-server-secret">API Secret</label>
+						<input type="text" id="input-server-secret" className="form-control"
+							placeholder="..."
+							onChange={ this.handleServerSecretChange }
+							/>
+					</fieldset>
+				</div>
+				<div className="chcp-serverselect-controls">
+					<div className="controlsgroup controlsgroup-left">
+						<button type="button"
+							className={ cancelButtonClassNames }
+							onClick={ this.handleCancelClick }
+							>
+							Cancel
+						</button>
+					</div>
+					<div className="controlsgroup controlsgroup-right">
+						<button type="button"
+							className={ addButtonClassNames }
+							onClick={ this.handleAddClick }
+							>
+							Add This Server
+						</button>
+					</div>
+				</div>
+			</div>
+		);
+	},
+
+	allValuesFilled() {
+		return !! this.state.serverTitle && !! this.state.serverKey && !! this.state.serverSecret;
+	},
+
+	handleServerTitleChange( event ) {
+		this.setState({
+			serverTitle: event.target.value
+		});
+	},
+
+	handleServerKeyChange( event ) {
+		this.setState({
+			serverKey: event.target.value
+		});
+	},
+
+	handleServerSecretChange( event ) {
+		this.setState({
+			serverSecret: event.target.value
+		});
+	},
+
+	handleCancelClick( event ) {
+		this.props.onCancelServerAdd();
+	},
+
+	handleAddClick( event ) {
+		let server = {
+			title: this.state.serverTitle,
+			key: this.state.serverKey,
+			secret: this.state.serverSecret
+		};
+
+		this.setState({
+			serverTitle: '',
+			serverKey: '',
+			serverSecret: ''
+		});
+
+		this.props.onServerAdd( server );
 	}
 });
 
@@ -309,7 +417,8 @@ const Panel = React.createClass({
 			// Bytes?  Blocks?  Something.
 			hdd: { free: 0, used: 0, total: 0 },
 			servers: [],
-			currentServer: -1
+			currentServer: -1,
+			addingServer: false
 		};
 	},
 
@@ -318,13 +427,17 @@ const Panel = React.createClass({
 	},
 
 	componentDidMount() {
-		this.connectIPC();
+		controllerComms.onModelUpdate( ( model ) => this.setState( model ) );
+		controllerComms.sendAction( 'model-request', {} );
 	},
 
 	render() {
 		let children;
 
-		if( this.state.currentServer == -1 ) {
+		if( this.state.addingServer ) {
+			children = this.renderServerAddForm();
+		}
+		else if( this.state.currentServer == -1 ) {
 			children = this.renderServerSelect();
 		}
 		else {
@@ -344,11 +457,13 @@ const Panel = React.createClass({
 				servers={ this.state.servers }
 				currentServer={ this.state.currentServer }
 				onSelect={ this.handleServerSelect }
+				onWantToAddServer={ this.handleWantToAddServer }
 				/>
 		);
 	},
 
 	renderServerPanel() {
+		// Note: Adding them in an array like this is frowned upon.
 		return ([
 			<Console log={ this.state.log } onCommand={ this.handleConsoleCommand }/>,
 			<Stats
@@ -360,17 +475,17 @@ const Panel = React.createClass({
 		]);
 	},
 
-	connectIPC() {
-		ipc.on( 'panel-model-update', this.updateStateFromPanelModel );
-		ipc.send( 'panel-action', 'model-request', {} );
-	},
-
-	updateStateFromPanelModel( event, model ) {
-		this.setState( model );
+	renderServerAddForm() {
+		return (
+			<ServerAdd
+				onServerAdd={ this.handleServerAdd }
+				onCancelServerAdd={ this.handleCancelServerAdd }
+				/>
+		)
 	},
 
 	handleConsoleCommand( command ) {
-		ipc.send( 'panel-action', 'send-console-command', { command } );
+		controllerComms.sendAction( 'send-console-command', { command } );
 	},
 
 	handleServerSelect( serverSelection ) {
@@ -378,13 +493,44 @@ const Panel = React.createClass({
 		// then tell the controller
 		// then wait for an update from the controller.
 		this.setState({ currentServer: serverSelection });
-		ipc.send( 'panel-action', 'select-server', { serverSelection } );
+		controllerComms.sendAction( 'select-server', { serverSelection } );
 	},
 
 	handleServerPowerAction( action ) {
-		ipc.send( 'panel-action', 'power-server', { action } );
+		controllerComms.sendAction( 'power-server', { action } );
+	},
+
+	handleWantToAddServer() {
+		this.setState({ addingServer: true });
+	},
+
+	handleServerAdd( server ) {
+		this.setState({
+			servers: this.state.servers.concat([ server ]),
+			addingServer: false
+		});
+
+		controllerComms.sendAction( 'add-server', { server });
+	},
+
+	handleCancelServerAdd() {
+		this.setState({ addingServer: false });
 	}
 });
+
+
+
+let controllerComms = {
+	onModelUpdate( handler ) {
+		ipc.on( 'model-update', ( event, model ) => {
+			handler( model );
+		});
+	},
+
+	sendAction( action, parameters ) {
+		ipc.send( 'ui-action', action, parameters );
+	}
+};
 
 
 
