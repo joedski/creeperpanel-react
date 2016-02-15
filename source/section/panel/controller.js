@@ -51,13 +51,8 @@ Object.assign( PanelController.prototype, {
 				this.performServerAction( params );
 			},
 			'add-server': ( params ) => {
-				// Guaranteeing server ids exist should probably be more rigorous...
-				let server = Object.assign( {}, params.server, {
-					id: uuid.v4()
-				});
-
 				this.setState({
-					servers: this.state.servers.concat([ server ])
+					servers: this.state.servers.concat([ params.server ])
 				});
 			}
 		};
@@ -165,19 +160,30 @@ Object.assign( PanelController.prototype, {
 
 	setState( newState ) {
 		let oldState = this.state;
-		// let serversJustLoaded = (newState.serversLoaded && ! oldState.serversLoaded);
-
 		this.state = Object.assign( {}, this.state, newState );
 
-		if( this.state.currentServer >= this.state.servers.length || this.state.currentServer < 0 ) {
-			this.state.currentServer = -1;
-		}
+		this.ensureStateServerIds();
+		this.ensureStateCurrentServer();
 
 		// Updates.
 
 		this.sendPanelModelUpdate();
 		this.conditionallySaveServers( oldState, this.state );
 		this.updateInfoAPI( oldState, this.state );
+	},
+
+	ensureStateServerIds() {
+		// Ensure each server entry has an ID.  This could probably be done better...
+		this.state.servers = this.state.servers.map( ( server ) => {
+			if( server.id ) return server;
+			return Object.assign( {}, server, { id: uuid.v4() });
+		});
+	},
+
+	ensureStateCurrentServer() {
+		if( this.state.currentServer >= this.state.servers.length || this.state.currentServer < 0 ) {
+			this.state.currentServer = -1;
+		}
 	},
 
 	conditionallySaveServers( oldState, currState ) {
