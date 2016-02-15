@@ -41,7 +41,7 @@ Object.assign( PanelController.prototype, {
 				this.setState({ currentServer: params.serverSelection });
 			},
 			'send-console-command': ( params ) => {
-				console.log( 'Received command:', JSON.stringify( parameters.command ) );
+				console.log( 'Received command:', JSON.stringify( params.command ) );
 			},
 			'model-request': () => {
 				this.sendPanelModelUpdate();
