@@ -3,10 +3,13 @@
 import electron from 'electron';
 const app = electron.app;
 
+import SettingsGroup from './auto/settings-group';
+import ServerSettings from './auto/server-settings';
 import PanelController from './view/control-panel/controller';
 
 
 
+let settingsGroup = null;
 let panelController = null;
 
 function createInitialPanel() {
@@ -18,11 +21,27 @@ function createInitialPanel() {
 }
 
 app.on( 'ready', () => {
+	settingsGroup = new SettingsGroup([
+		ServerSettings
+	]);
+
+	settingsGroup.read( ( error ) => {
+		if( error ) {
+			console.error( `Error trying to read settings files:` );
+			console.error( error );
+			return;
+		}
+
+		console.log( `Successfully read all settings.` );
+		return;
+	});
+
 	createInitialPanel();
 });
 
 app.on( 'window-all-closed', () => {
 	if( process.platform !== 'darwin' ) {
+		// TODO: Write preferences before the app terminates?
 		app.quit();
 	}
 });

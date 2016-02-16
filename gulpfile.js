@@ -14,6 +14,8 @@ gulp.task( 'build-scripts', () => {
 	return gulp.src([ 'source/**/*.{js,jsx,_js,_jsx}' ], { base: 'source' })
 		.pipe( sourcemaps.init() )
 		.pipe( babel({
+			// 'stage-0' must go last.  or maybe last-array-position actually means first.  I dunno.
+			// Placing it last in the array results makes it not break, though.
 			presets: [ 'es2015', 'react', 'stage-0' ],
 			// plugins: [
 			// 	[ 'streamline', { runtime: 'fibers' }]

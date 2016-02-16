@@ -4,6 +4,8 @@ import { inherits } from 'util';
 import { ipcRenderer as ipc } from 'electron';
 
 function ControllerViewComm() {
+	EventEmitter.call( this );
+
 	// A different event is fired the very first time,
 	// and should be used to handle initializing the view.
 	// Note that this laziness may result in

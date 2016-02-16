@@ -1,5 +1,8 @@
 // @flow
 
+import Immutable from 'immutable';
+import type ServerRecord from 'records/server';
+
 export type Action
 	= {
 		type: 'mcpanel/add-server',
@@ -16,6 +19,10 @@ export type Action
 	| {
 		type: 'mcpanel/select-server',
 		serverId: string
+	}
+	| {
+		type: 'mcpanel/add-server-entries',
+		serverEntries: Immutable.Map<string, ServerRecord>
 	}
 	// | {
 	// 	type: 'mcpanel/power-server',

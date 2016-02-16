@@ -1,6 +1,6 @@
 
 import Dispatcher from 'flux/lib/Dispatcher';
-import Action from './actions';
+import type Action from './actions';
 
 const instance :Dispatcher<Action> = new Dispatcher();
 export default instance;

@@ -26,13 +26,16 @@ class ServerStore extends ReduceStore<string, ServerRecord> {
 	reduce( state :State, action :Action ) :State {
 		switch( action.type ) {
 			case 'mcpanel/add-server':
-				return state.set( server.id, server );
+				return state.set( action.server.id, action.server );
 
 			case 'mcpanel/remove-server':
 				return state.delete( action.serverId );
 
 			case 'mcpanel/update-server':
-				return state.set( serverId, server );
+				return state.set( action.server.id, action.server );
+
+			case 'mcpanel/add-server-entries':
+				return state.merge( action.serverEntries );
 
 			default:
 				return state;

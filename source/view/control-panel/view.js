@@ -16,10 +16,7 @@ themer.write( 'default', window.document );
 
 
 const ControlPanel = React.createClass({
-	// initial state is passed as a prop so that
-	// state is defined entirely by the view's controller.
 	getInitialState() {
-		// return this.props.initialState;
 		// Hax?
 		return Object.assign( comm.state, {
 			addingServer: false,
@@ -46,11 +43,12 @@ const ControlPanel = React.createClass({
 	},
 
 	renderChild() {
+		let serversArray = this.getStateServersArray();
 		let child;
 
 		return (
-			(this.state.servers && this.state.servers.size) ?
-				this.state.servers.map( ( s, i ) => <div key={s.id}>s.title</div> )
+			(serversArray && serversArray.length) ?
+				serversArray.map( ( s, i ) => <div key={ s.id }>{ s.title }</div> )
 				: [<div key="-1">(no servers)</div>]
 		);
 
@@ -61,6 +59,12 @@ const ControlPanel = React.createClass({
 		// 			currentServer
 		// 	);
 		// }
+	},
+
+	getStateServersArray() {
+		return Object.keys( this.state.servers )
+			.map( ( key ) => this.state.servers[ key ] )
+			;
 	}
 });
 
