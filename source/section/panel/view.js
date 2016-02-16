@@ -8,20 +8,14 @@ import ReactDOM from 'react-dom';
 import classNames from 'classnames';
 
 import { ipcRenderer as ipc } from 'electron';
+// import { searchParams } from 'app-util'
 
 import themer from 'app-themer';
 
 console.log( 'Test.' );
 themer.write( 'default', window.document );
 
-const searchParams = new Map(
-	window.location.search
-		.replace( /^\?/, '' )
-		.split( '&' )
-		.map( pairString => {
-			return pairString.split( '=' );
-		})
-);
+// const params = searchParams( window );
 
 
 

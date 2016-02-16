@@ -14,7 +14,7 @@ gulp.task( 'build-scripts', () => {
 	return gulp.src([ 'source/**/*.{js,jsx,_js,_jsx}' ], { base: 'source' })
 		.pipe( sourcemaps.init() )
 		.pipe( babel({
-			presets: [ 'es2015', 'react' ],
+			presets: [ 'es2015', 'react', 'stage-0' ],
 			// plugins: [
 			// 	[ 'streamline', { runtime: 'fibers' }]
 			// ]
