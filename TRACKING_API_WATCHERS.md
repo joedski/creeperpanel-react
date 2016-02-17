@@ -26,3 +26,4 @@ Outline of process.
 Other Questions:
 - Should creating an APIPoller lead to creating an entry in both ServerPollerStore and ServerInfoStore?
 	- I don't see why not, they can both respond to the same action, and it's not like they actually depend on info from eachother.
+	- Additionally, since what record fields are available must be known somewhere, creating an initial record with default values is plenty doable.
