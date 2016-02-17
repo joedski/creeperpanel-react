@@ -105,7 +105,7 @@ Object.assign( ControlPanelController.prototype, {
 		// This is fine since data is treated as read-only at the view.
 
 		let computed = {
-			servers: ServerStore.getState().toJS()
+			servers: ServerStore.getStateAsJS()
 		};
 
 		return computed;

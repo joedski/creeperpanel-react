@@ -1,16 +1,26 @@
 var gulp = require( 'gulp' );
+var jshint = require( 'gulp-jshint' );
 // var gulpIf = require( 'gulp-if' );
 var sass = require( 'gulp-sass' );
 var babel = require( 'gulp-babel' );
 var sourcemaps = require( 'gulp-sourcemaps' );
 
+
+
 gulp.task( 'default', [ 'build' ]);
 
 
 
+gulp.task( 'hint', () => {
+	return bableSources()
+		.pipe( jshint() )
+		.pipe( jshint.reporter( 'jshint-stylish' ) )
+		;
+})
+
 gulp.task( 'build', [ 'build-scripts', 'build-styles', 'build-assets' ]);
 
-gulp.task( 'build-scripts', () => {
+function bableSources() {
 	return gulp.src([ 'source/**/*.{js,jsx,_js,_jsx}' ], { base: 'source' })
 		.pipe( sourcemaps.init() )
 		.pipe( babel({
@@ -21,6 +31,11 @@ gulp.task( 'build-scripts', () => {
 			// 	[ 'streamline', { runtime: 'fibers' }]
 			// ]
 		}))
+		;
+}
+
+gulp.task( 'build-scripts', () => {
+	return bableSources()
 		.pipe( sourcemaps.write( './' ) )
 		.pipe( gulp.dest( 'app' ) )
 		;

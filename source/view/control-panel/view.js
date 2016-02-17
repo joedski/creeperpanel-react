@@ -1,17 +1,16 @@
-import EventEmitter from 'events';
-import { inherits } from 'util';
-
 import React from 'react';
 import ReactDOM from 'react-dom';
 import classNames from 'classnames';
 
 import themer from 'app-themer';
-// import { searchParams } from 'app-util';
 import comm from './controller-view-comm';
 
+import ServerSelect from './components/server-select';
+import ServerAdd from './components/server-add';
+
+
+
 themer.write( 'default', window.document );
-// const params = searchParams( window );
-// const comm = new ControllerViewComm();
 
 
 
@@ -43,28 +42,61 @@ const ControlPanel = React.createClass({
 	},
 
 	renderChild() {
-		let serversArray = this.getStateServersArray();
-		let child;
+		// let child;
 
-		return (
-			(serversArray && serversArray.length) ?
-				serversArray.map( ( s, i ) => <div key={ s.id }>{ s.title }</div> )
-				: [<div key="-1">(no servers)</div>]
-		);
-
-		// if( ! this.state.addingServer ) {
-		// 	return (
-		// 		<ServerSelect
-		// 			servers={ this.state.servers }
-		// 			currentServer
-		// 	);
-		// }
+		if( this.state.addingServer ) {
+			return (
+				<ServerAdd
+					onAddServer={ this.handleServerAdd }
+					onCancel={ this.handleCancelServerAdd }
+					/>
+			);
+		}
+		else if( ! this.state.currentServer ) {
+			return (
+				<ServerSelect
+					servers={ this.state.servers }
+					currentServer={ this.state.currentServer }
+					onChooseServer={ this.handleChooseServer }
+					onWantToAddServer={ this.handleWantToAddServer }
+					/>
+			);
+		}
+		else {
+			return (
+				<ServerConsole
+					state={ this.state }
+					/>
+			);
+		}
 	},
 
-	getStateServersArray() {
-		return Object.keys( this.state.servers )
-			.map( ( key ) => this.state.servers[ key ] )
-			;
+	handleChooseServer( serverId ) {
+		this.setState({ currentServer: serverId });
+
+		comm.sendAction({
+			type: 'mcpanel/start-polling-api',
+			serverId: this.state.currentServer
+		});
+	},
+
+	handleWantToAddServer() {
+		this.setState({ addingServer: true, currentServer: null });
+	},
+
+	handleCancelServerAdd() {
+		this.setState({ addingServer: false });
+	},
+
+	handleServerAdd( server ) {
+		this.setState({
+			addingServer: false
+		});
+
+		comm.sendAction({
+			type: 'mcpanel/add-server',
+			server: server
+		});
 	}
 });
 

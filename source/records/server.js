@@ -3,10 +3,10 @@ import Immutable from 'immutable';
 import uuid from 'uuid';
 
 const ServerRecordDefinition = Immutable.Record({
-	id: undefined,
-	title: undefined,
-	key: undefined,
-	secret: undefined
+	id: '',
+	title: '',
+	key: '',
+	secret: ''
 });
 
 export default class ServerRecord extends ServerRecordDefinition {
@@ -15,9 +15,10 @@ export default class ServerRecord extends ServerRecordDefinition {
 	key: string;
 	secret: string;
 
-	constructor( id :?string, title :string, key :string, secret :string ) {
-		super({ title, key, string,
-			id: id || uuid.v4()
+	constructor( fields ) {
+		super({
+			...fields,
+			id: fields.id || uuid.v4()
 		});
 	}
 }

@@ -55,7 +55,7 @@ Object.assign( ServerSettings.prototype, {
 	},
 
 	computeState() {
-		return ServerStore.getState();
+		return ServerStore.getStateAsJS();
 	},
 
 	readSettings( next ) {
@@ -63,10 +63,10 @@ Object.assign( ServerSettings.prototype, {
 			let serversState;
 
 			if( serversString ) {
-				serversState = Immutable.fromJS( JSON.parse( serversString ) );
+				serversState = JSON.parse( serversString );
 			}
 			else {
-				serversState = Immutable.Map();
+				serversState = {};
 			}
 
 			dispatch({
@@ -77,7 +77,7 @@ Object.assign( ServerSettings.prototype, {
 	},
 
 	writeSettings( next ) {
-		let serversString = JSON.stringify( this.computeState().toJS(), null, 2 );
+		let serversString = JSON.stringify( this.computeState(), null, 2 );
 		preferencesFile.write( 'servers.json', serversString, next );
 	},
 
