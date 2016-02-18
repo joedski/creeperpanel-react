@@ -21,7 +21,9 @@ export const ConsoleSideBar = React.createClass({
 		return (
 			<div className="chcp-sidebar">
 				<div className="chcp-sidebar-stats">
-					<PlayersList/>
+					<PlayersList
+						players={ this.getPlayerList() }
+					/>
 				</div>
 				<div className="chcp-sidebar-servercontrols">
 					<div data-action="start"
@@ -55,13 +57,40 @@ export const ConsoleSideBar = React.createClass({
 			});
 		}
 	},
+
+	getPlayerList() {
+		// Race condition: the serverInfo for a server may or may not be created yet...
+		let serverInfo = this.props.state.serverInfos[ this.props.state.currentServer ];
+
+		if( ! serverInfo ) {
+			return [];
+		}
+
+		return serverInfo.players;
+	}
 });
 
 export const PlayersList = React.createClass({
 	render() {
 		return (
-			<div className="chcp-playerslist">Players!</div>
+			<div className="chcp-playerslist">
+				<ul>{ this.renderPlayerItems() }</ul>
+			</div>
 		);
+	},
+
+	renderPlayerItems() {
+		let players = this.props.players;
+
+		if( ! players.length ) {
+			return [
+				<li className="disabled">(No players on at the moment!)</li>
+			];
+		}
+
+		return players.map( p => (
+			<li>{ p.name }</li>
+		));
 	}
 });
 

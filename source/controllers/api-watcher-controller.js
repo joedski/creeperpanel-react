@@ -136,15 +136,14 @@ Object.assign( APIWatcher.prototype, ObjectController.prototype, {
 
 		this.setRepeatingTimeout( 'playersList', '5 seconds', () => {
 			this.api.playersList( ( error, result ) => {
-				console.log( 'APIWatcher:playersList:', error ? 'error' : 'success' );
-				console.log( error || JSON.stringify( result ) );
+				// console.log( 'APIWatcher:playersList:', error ? 'error' : 'success' );
+				// console.log( error || JSON.stringify( result ) );
 
 				if( result )
 				dispatch({
 					type: 'chapi/update-players',
 					serverId: this.serverId,
-					// TODO: Figure out what each players object contains.
-					log: result.players
+					players: result.players
 				});
 			});
 		});

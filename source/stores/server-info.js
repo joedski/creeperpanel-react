@@ -4,6 +4,7 @@
 import type { Action } from '../actions';
 import ServerInfoRecord from '../records/server-info';
 import ConsoleCommandRecord from '../records/console-command';
+import ServerPlayerRecord from '../records/server-player';
 
 import Immutable from 'immutable';
 import ReduceStore from 'flux/lib/FluxReduceStore';
@@ -58,7 +59,9 @@ class ServerInfoStore extends ReduceStore<string, ServerInfoRecord> {
 
 				return state.setIn(
 					[ action.serverId, 'players' ],
-					Immutable.List( action.players )
+					Immutable.List( action.players.map( p =>
+						new ServerPlayerRecord( action.serverId, p )
+					))
 				);
 			}
 
