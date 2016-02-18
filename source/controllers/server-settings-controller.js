@@ -7,13 +7,15 @@ import Immutable from 'immutable';
 
 import FluxStoreGroup from 'flux/lib/FluxStoreGroup';
 
+import ObjectController from '../base/object-controller';
 import { dispatch } from '../dispatcher';
 import ServerStore from '../stores/server';
 import preferencesFile from '../preferences/file';
 
 export default function ServerSettingsController() {
 	// EventEmitter.call( this );
-	this.addStoreListeners();
+	// this.addStoreListeners();
+	ObjectController.call( this );
 }
 
 // inherits( ServerSettingsController, EventEmitter );
@@ -28,28 +30,7 @@ Object.assign( ServerSettingsController, {
 	}
 });
 
-Object.assign( ServerSettingsController.prototype, {
-	addStoreListeners() {
-		let stores = ServerSettingsController.getStores();
-		let changed = false;
-
-		let setChanged = () => { changed = true; };
-
-		this.storeSubscriptions = stores
-			.map( store => store.addListener( setChanged ) )
-			;
-
-		let handleDispatchComplete = () => {
-			if( changed ) {
-				this.handleStateChanged();
-			}
-
-			changed = false;
-		};
-
-		this.storeGroup = new FluxStoreGroup( stores, handleDispatchComplete );
-	},
-
+Object.assign( ServerSettingsController.prototype, ObjectController.prototype, {
 	handleStateChanged() {
 		this.writeSettings();
 	},
@@ -80,8 +61,4 @@ Object.assign( ServerSettingsController.prototype, {
 		let serversString = JSON.stringify( this.computeState(), null, 2 );
 		preferencesFile.write( ServerSettingsController.getSettingsFile(), serversString, next );
 	},
-
-	release() {
-		this.storeGroup.release();
-	}
 });

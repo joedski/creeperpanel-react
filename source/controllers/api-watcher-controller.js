@@ -7,6 +7,7 @@ import Immutable from 'immutable';
 
 import FluxStoreGroup from 'flux/lib/FluxStoreGroup';
 
+import ObjectController from '../base/object-controller';
 import { dispatch } from '../dispatcher';
 import ServerStore from '../stores/server';
 import ServerInfoStore from '../stores/server-info';
@@ -26,7 +27,8 @@ export default function APIWatcherController() {
 	this.state = Immutable.Set();
 	this.apiWatchers = Immutable.Map();
 
-	this.addStoreListeners();
+	// this.addStoreListeners();
+	ObjectController.call( this );
 }
 
 // inherits( APIWatcherController, EventEmitter );
@@ -37,39 +39,14 @@ Object.assign( APIWatcherController, {
 	}
 });
 
-Object.assign( APIWatcherController.prototype, {
+Object.assign( APIWatcherController.prototype, ObjectController.prototype, {
 	// Immutable.Set<string>
 	state: null,
-
-	addStoreListeners() {
-		let stores = APIWatcherController.getStores();
-		let changed = false;
-
-		let setChanged = () => { changed = true; };
-
-		this.storeSubscriptions = stores
-			.map( store => store.addListener( setChanged ) )
-			;
-
-		let handleDispatchComplete = () => {
-			if( changed ) {
-				this.handleStateChanged();
-			}
-
-			changed = false;
-		};
-
-		this.storeGroup = new FluxStoreGroup( stores, handleDispatchComplete );
-	},
 
 	handleStateChanged() {
 		this.reconcileWatchers();
 		// TODO: Check for onlineness... (AppEnvironmentStore? or something like that?)
 		// this.reconcileOnlineness();
-	},
-
-	release() {
-		this.storeGroup.release();
 	},
 
 	////////
@@ -113,8 +90,10 @@ function APIWatcher( serverId ) {
 
 	this.tick = new Tick();
 
-	this.addStoreListeners();
+	// this.addStoreListeners();
 	this.resetAPI();
+
+	ObjectController.call( this );
 }
 
 Object.assign( APIWatcher, {
@@ -123,35 +102,9 @@ Object.assign( APIWatcher, {
 	}
 });
 
-Object.assign( APIWatcher.prototype, {
-	addStoreListeners() {
-		let stores = APIWatcherController.getStores();
-		let changed = false;
-
-		let setChanged = () => { changed = true; };
-
-		this.storeSubscriptions = stores
-			.map( store => store.addListener( setChanged ) )
-			;
-
-		let handleDispatchComplete = () => {
-			if( changed ) {
-				this.handleStateChanged();
-			}
-
-			changed = false;
-		};
-
-		this.storeGroup = new FluxStoreGroup( stores, handleDispatchComplete );
-	},
-
+Object.assign( APIWatcher.prototype, ObjectController.prototype, {
 	handleStateChanged() {
 		this.resetAPI();
-	},
-
-	release() {
-		this.tick.clear();
-		this.storeGroup.release();
 	},
 
 	////////

@@ -7,6 +7,8 @@ import Immutable from 'immutable';
 
 import FluxStoreGroup from 'flux/lib/FluxStoreGroup';
 
+import ObjectController from '../base/object-controller';
+
 import { dispatch } from '../dispatcher';
 import ServerStore from '../stores/server';
 import ServerInfoStore from '../stores/server-info';
@@ -19,7 +21,7 @@ import ServerInfoAPI from 'server-info-api';
 export default function APIConsoleCommandController() {
 	this.consoleCommands = Immutable.Map();
 	this.state = Immutable.List();
-	this.addStoreListeners();
+	ObjectController.call( this );
 }
 
 Object.assign( APIConsoleCommandController, {
@@ -28,34 +30,9 @@ Object.assign( APIConsoleCommandController, {
 	}
 });
 
-Object.assign( APIConsoleCommandController.prototype, {
-	addStoreListeners() {
-		let stores = APIWatcherController.getStores();
-		let changed = false;
-
-		let setChanged = () => { changed = true; };
-
-		this.storeSubscriptions = stores
-			.map( store => store.addListener( setChanged ) )
-			;
-
-		let handleDispatchComplete = () => {
-			if( changed ) {
-				this.handleStateChanged();
-			}
-
-			changed = false;
-		};
-
-		this.storeGroup = new FluxStoreGroup( stores, handleDispatchComplete );
-	},
-
+Object.assign( APIConsoleCommandController.prototype, ObjectController.prototype, {
 	handleStateChanged() {
 		this.reconcileCommands();
-	},
-
-	release() {
-		this.storeGroup.release();
 	},
 
 	////////
@@ -97,8 +74,10 @@ Object.assign( APIConsoleCommandController.prototype, {
 function CommandSender( consoleCommand ) {
 	this.consoleCommand = consoleCommand;
 
-	this.addStoreListeners();
+	// this.addStoreListeners();
 	this.resetAPI();
+
+	ObjectController.call( this );
 }
 
 Object.assign( CommandSender, {
@@ -107,35 +86,9 @@ Object.assign( CommandSender, {
 	}
 });
 
-Object.assign( CommandSender.prototype, {
-	addStoreListeners() {
-		let stores = CommandSender.getStores();
-		let changed = false;
-
-		let setChanged = () => { changed = true; };
-
-		this.storeSubscriptions = stores
-			.map( store => store.addListener( setChanged ) )
-			;
-
-		let handleDispatchComplete = () => {
-			if( changed ) {
-				this.handleStateChanged();
-			}
-
-			changed = false;
-		};
-
-		this.storeGroup = new FluxStoreGroup( stores, handleDispatchComplete );
-	},
-
+Object.assign( CommandSender.prototype, ObjectController.prototype, {
 	handleStateChanged() {
 		this.resetAPI();
-	},
-
-	release() {
-		// clear request?
-		this.storeGroup.release();
 	},
 
 	resetAPI() {

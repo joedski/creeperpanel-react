@@ -36,14 +36,15 @@ export const ConsoleLog = React.createClass({
 	},
 
 	renderLogLines() {
+		// Race condition...
 		let serverInfo = this.props.state.serverInfos[ this.props.state.currentServer ];
 
 		if( ! serverInfo ) {
 			return [];
 		}
 
-		let logLines = this.props.state.serverInfos[ this.props.state.currentServer ].log;
-		
+		let logLines = serverInfo.log;
+
 		return logLines.map( ( lineText, i ) => (
 			<div
 				key={ i }

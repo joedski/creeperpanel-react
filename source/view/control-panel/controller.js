@@ -8,13 +8,14 @@ import FluxStoreGroup from 'flux/lib/FluxStoreGroup';
 
 import electron, { BrowserWindow, ipcMain as ipc } from 'electron';
 
+import ObjectController from '../../base/object-controller';
 import { dispatch } from '../../dispatcher';
 import ServerStore from '../../stores/server';
 import ServerInfoStore from '../../stores/server-info';
 
 export default function ControlPanelController() {
 	EventEmitter.call( this );
-	this.addStoreListeners();
+	ObjectController.call( this );
 	this.initWindow();
 }
 
@@ -28,28 +29,8 @@ Object.assign( ControlPanelController, {
 	}
 });
 
-Object.assign( ControlPanelController.prototype, {
+Object.assign( ControlPanelController.prototype, ObjectController.prototype, {
 	//////// Init
-
-	addStoreListeners() {
-		let stores = ControlPanelController.getStores();
-		let changed = false;
-		let setChanged = () => { changed = true; };
-
-		this.storeSubscriptions = stores
-			.map( store => store.addListener( setChanged ) )
-			;
-
-		let handleDispatchComplete = () => {
-			if( changed ) {
-				this.handleStateChanged();
-			}
-
-			changed = false;
-		};
-
-		this.storeGroup = new FluxStoreGroup( stores, handleDispatchComplete );
-	},
 
 	initWindow() {
 		this.window = new BrowserWindow({ width: 1024 });
@@ -116,7 +97,7 @@ Object.assign( ControlPanelController.prototype, {
 	//////// Cleanup.
 
 	close() {
-		this.removeStoreListeners();
+		this.release();
 		this.removeWindow();
 		// this.removeAPIWatcher();
 
@@ -128,9 +109,5 @@ Object.assign( ControlPanelController.prototype, {
 		ipc.removeListener( 'action', this._handleAction );
 
 		this.window = null;
-	},
-
-	removeStoreListeners() {
-		this.storeGroup.release();
 	}
 });
