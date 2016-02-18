@@ -6,18 +6,18 @@ import type { Action } from '../actions';
 import Immutable from 'immutable';
 import ReduceStore from 'flux/lib/FluxReduceStore';
 import dispatcher from '../dispatcher';
+import APIWatchRecord from '../records/api-watch';
 
 
 
-// type State = Immutable.Map<string, any>;
-type State = Immutable.Set<string>;
+type State = Immutable.Map<string, APIWatchRecord>;
 
 
 
-class APIWatcherStore extends ReduceStore<string> {
+class APIWatcherStore extends ReduceStore<State> {
 	getInitialState() :State {
 		// return Immutable.Map();
-		return Immutable.Set();
+		return Immutable.Map();
 	}
 
 	// TODO: Determine if Immutable can revivify Immutable.* objects that have been passed through IPC.
@@ -28,11 +28,34 @@ class APIWatcherStore extends ReduceStore<string> {
 			}
 
 			case 'mcpanel/start-polling-api': {
-				return state.add( action.serverId );
+				let watch = state.get( action.serverId ) || new APIWatchRecord();
+				watch = watch.set(
+					'activeWatches',
+					watch.get( 'activeWatches' ) + 1
+				);
+				return state.set( action.serverId, watch );
 			}
 
 			case 'mcpanel/stop-polling-api': {
-				return state.delete( action.serverId );
+				let watch = state.get( action.serverId );
+
+				if( watch ) {
+					watch = watch.set(
+						'activeWatches',
+						watch.get( 'activeWatches' ) - 1
+					);
+
+					if( watch.get( 'activeWatches' ) <= 0 ) {
+						watch = null;
+					}
+				}
+
+				if( watch ) {
+					return state.set( action.serverId, watch );
+				}
+				else {
+					return state.delete( action.serverId );
+				}
 			}
 
 			default:

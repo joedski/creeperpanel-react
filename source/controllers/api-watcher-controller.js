@@ -38,6 +38,9 @@ Object.assign( APIWatcherController, {
 });
 
 Object.assign( APIWatcherController.prototype, {
+	// Immutable.Set<string>
+	state: null,
+
 	addStoreListeners() {
 		let stores = APIWatcherController.getStores();
 		let changed = false;
@@ -72,7 +75,7 @@ Object.assign( APIWatcherController.prototype, {
 	////////
 
 	reconcileWatchers() {
-		let newWatchers = APIWatcherStore.getState();
+		let newWatchers = Immutable.Set( APIWatcherStore.getState().keys() );
 		let oldWatchers = this.state;
 
 		let watchersToAdd = newWatchers.subtract( oldWatchers );
@@ -80,6 +83,8 @@ Object.assign( APIWatcherController.prototype, {
 
 		watchersToRemove.forEach( serverId => this.removeWatcher( serverId ) );
 		watchersToAdd.forEach( serverId => this.addWatcher( serverId ) );
+
+		this.state = newWatchers;
 	},
 
 	removeWatcher( serverId ) {
@@ -96,7 +101,7 @@ Object.assign( APIWatcherController.prototype, {
 		let watcher = new APIWatcher( serverId );
 		// TODO: Check somewhere (AppEnvironmentStore?) whether or not we're online.
 		watcher.online();
-		this.apiWatchers = this.apiWatchers.add( serverId, watcher );
+		this.apiWatchers = this.apiWatchers.set( serverId, watcher );
 	},
 });
 
@@ -104,12 +109,12 @@ Object.assign( APIWatcherController.prototype, {
 
 function APIWatcher( serverId ) {
 	this.serverId = serverId;
-	this.server = ServerStore.get( serverId );
+	// this.server = ServerStore.getState().get( serverId );
 
 	this.tick = new Tick();
 
 	this.addStoreListeners();
-	this.initWatchers();
+	this.resetAPI();
 }
 
 Object.assign( APIWatcher, {
@@ -152,7 +157,7 @@ Object.assign( APIWatcher.prototype, {
 	////////
 
 	resetAPI() {
-		this.server = ServerStore.get( this.serverId );
+		this.server = ServerStore.getState().get( this.serverId );
 		this.api = new ServerInfoAPI({
 			credentials: { key: this.server.key, secret: this.server.secret }
 		});
@@ -161,8 +166,11 @@ Object.assign( APIWatcher.prototype, {
 	online() {
 		this.running = true;
 
-		this.setRepeatingTimeout( 'consoleRead', '1 second', () => {
+		this.setRepeatingTimeout( 'consoleRead', '2 seconds', () => {
 			this.api.consoleRead( ( error, result ) => {
+				// console.log( 'APIWatcher:consoleRead:', error ? 'error' : 'success' );
+				// console.log( error || JSON.stringify( result ) );
+
 				if( result )
 				dispatch({
 					type: 'chapi/update-log',
@@ -175,6 +183,9 @@ Object.assign( APIWatcher.prototype, {
 
 		this.setRepeatingTimeout( 'playersList', '5 seconds', () => {
 			this.api.playersList( ( error, result ) => {
+				console.log( 'APIWatcher:playersList:', error ? 'error' : 'success' );
+				console.log( error || JSON.stringify( result ) );
+
 				if( result )
 				dispatch({
 					type: 'chapi/update-players',
@@ -195,6 +206,7 @@ Object.assign( APIWatcher.prototype, {
 	setRepeatingTimeout( name, timeout, callback ) {
 		let timeoutedCallback = () => {
 			callback();
+			this.tick.clear( name );
 			this.tick.setTimeout( name, timeoutedCallback, timeout );
 		};
 

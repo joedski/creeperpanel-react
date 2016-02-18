@@ -7,6 +7,7 @@ import comm from './controller-view-comm';
 
 import ServerSelect from './components/server-select';
 import ServerAdd from './components/server-add';
+import ServerConsole from './components/server-console';
 
 
 
@@ -42,8 +43,6 @@ const ControlPanel = React.createClass({
 	},
 
 	renderChild() {
-		// let child;
-
 		if( this.state.addingServer ) {
 			return (
 				<ServerAdd
@@ -76,7 +75,7 @@ const ControlPanel = React.createClass({
 
 		comm.sendAction({
 			type: 'mcpanel/start-polling-api',
-			serverId: this.state.currentServer
+			serverId: serverId
 		});
 	},
 
@@ -111,3 +110,10 @@ comm.once( 'state-update:initial', ( state ) => {
 });
 
 comm.sendReady();
+
+window.addEventListener( 'unload', () => {
+	comm.sendAction({
+		type: 'mcpanel/stop-polling-api',
+		serverId: this.state.currentServer
+	});
+});

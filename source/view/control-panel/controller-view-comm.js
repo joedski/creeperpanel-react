@@ -1,7 +1,10 @@
+// @flow weak
+
 import EventEmitter from 'events';
 import { inherits } from 'util';
 
 import { ipcRenderer as ipc } from 'electron';
+import type { Action } from '../../actions';
 
 function ControllerViewComm() {
 	EventEmitter.call( this );
@@ -31,11 +34,11 @@ inherits( ControllerViewComm, EventEmitter );
 Object.assign( ControllerViewComm.prototype, {
 	state: null,
 
-	sendAction( action ) {
+	sendAction( action: Action ) :void {
 		ipc.send( 'action', action );
 	},
 
-	sendReady() {
+	sendReady() :void {
 		console.log( 'Comm: sending ui-ready' );
 		ipc.send( 'ui-ready' );
 	}

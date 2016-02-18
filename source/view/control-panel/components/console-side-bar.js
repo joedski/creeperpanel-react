@@ -6,24 +6,24 @@ import { sendAction } from '../controller-view-comm';
 export const ConsoleSideBar = React.createClass({
 	render() {
 		let startButtonClassNames = classNames( 'btn', 'btn-block', 'btn-success', {
-			'disabled': !! this.props.currentServerAction
+			'disabled': !! this.props.state.currentServerPowerAction
 		});
 
 		let restartButtonClassNames = classNames( 'btn', 'btn-block', 'btn-warning', {
-			'disabled': !! this.props.currentServerAction
+			'disabled': !! this.props.state.currentServerPowerAction
 		});
 
 		let stopButtonClassNames = classNames( 'btn', 'btn-block', 'btn-danger', {
-			'disabled': !! this.props.currentServerAction
+			'disabled': !! this.props.state.currentServerPowerAction
 		});
 
 		// TODO: Use CSSTransitionGroup or something to make a dynamically added pop-over.
 		return (
-			<div className="chcp-stats">
-				<div className="chcp-stats-stats">
+			<div className="chcp-sidebar">
+				<div className="chcp-sidebar-stats">
 					<PlayersList/>
 				</div>
-				<div className="chcp-stats-servercontrols">
+				<div className="chcp-sidebar-servercontrols">
 					<div data-action="start"
 						onClick={ this.handleServerButtonClick }
 						className={ startButtonClassNames }
@@ -50,6 +50,7 @@ export const ConsoleSideBar = React.createClass({
 			// this.props.onServerPowerAction( action );
 			sendAction({
 				type: 'mcpanel/power-server',
+				serverId: this.props.state.currentServer,
 				powerAction: action
 			});
 		}

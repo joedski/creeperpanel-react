@@ -3,14 +3,16 @@
 import electron from 'electron';
 const app = electron.app;
 
-import SettingsGroup from './auto/settings-group';
-import ServerSettingsController from './auto/server-settings-controller';
+import SettingsGroup from './controllers/settings-group';
+import ServerSettingsController from './controllers/server-settings-controller';
+import APIWatcherController from './controllers/api-watcher-controller';
 import PanelController from './view/control-panel/controller';
 
 
 
 let settingsGroup = null;
 let panelController = null;
+let apiWatcherController = null;
 
 function createInitialPanel() {
 	panelController = new PanelController();
@@ -24,6 +26,8 @@ app.on( 'ready', () => {
 	settingsGroup = new SettingsGroup([
 		ServerSettingsController
 	]);
+
+	apiWatcherController = new APIWatcherController();
 
 	settingsGroup.read( ( error ) => {
 		if( error ) {

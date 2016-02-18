@@ -6,10 +6,16 @@ import ConsoleSideBar from './console-side-bar';
 
 export const ServerConsole = React.createClass({
 	render() {
-		<div className="chcp-serverconsole">
-			<CommandConsole/>
-			<ConsoleSideBar/>
-		</div>
+		return (
+			<div className="chcp-serverconsole">
+				<CommandConsole
+					state={ this.props.state }
+					/>
+				<ConsoleSideBar
+					state={ this.props.state }
+					/>
+			</div>
+		);
 	}
 });
 

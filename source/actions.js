@@ -26,10 +26,12 @@ export type Action
 		// server: any
 		server: ServerFields
 	}
-	| {
-		type: 'mcpanel/select-server',
-		serverId: string
-	}
+	// TODO: Decide whether this will actually live outside the view or not.
+	// Currently, selecting a server to look at is purely a transient view state thing.
+	// | {
+	// 	type: 'mcpanel/select-server',
+	// 	serverId: string
+	// }
 	| {
 		type: 'mcpanel/add-server-entries',
 		// serverEntries: Immutable.Map<string, ServerRecord>
@@ -46,6 +48,12 @@ export type Action
 		type: 'mcpanel/send-console-command',
 		serverId: string,
 		command: string
+	}
+	| {
+		type: 'mcpanel/update-console-command-status',
+		serverId: string,
+		commandId: string,
+		status: ('unsent' | 'sent' | 'completed' | 'errored')
 	}
 	// Watching servers
 	| {

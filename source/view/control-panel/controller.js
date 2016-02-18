@@ -10,6 +10,7 @@ import electron, { BrowserWindow, ipcMain as ipc } from 'electron';
 
 import { dispatch } from '../../dispatcher';
 import ServerStore from '../../stores/server';
+import ServerInfoStore from '../../stores/server-info';
 
 export default function ControlPanelController() {
 	EventEmitter.call( this );
@@ -23,7 +24,7 @@ inherits( ControlPanelController, EventEmitter );
 
 Object.assign( ControlPanelController, {
 	getStores() {
-		return [ ServerStore ];
+		return [ ServerStore, ServerInfoStore ];
 	}
 });
 
@@ -105,7 +106,8 @@ Object.assign( ControlPanelController.prototype, {
 		// This is fine since data is treated as read-only at the view.
 
 		let computed = {
-			servers: ServerStore.getStateAsJS()
+			servers: ServerStore.getStateAsJS(),
+			serverInfos: ServerInfoStore.getStateAsJS()
 		};
 
 		return computed;
@@ -116,6 +118,7 @@ Object.assign( ControlPanelController.prototype, {
 	close() {
 		this.removeStoreListeners();
 		this.removeWindow();
+		// this.removeAPIWatcher();
 
 		this.emit( 'closed' );
 	},
@@ -129,5 +132,5 @@ Object.assign( ControlPanelController.prototype, {
 
 	removeStoreListeners() {
 		this.storeGroup.release();
-	},
+	}
 });
