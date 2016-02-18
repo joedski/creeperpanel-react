@@ -4,7 +4,7 @@ import electron from 'electron';
 const app = electron.app;
 
 import SettingsGroup from './auto/settings-group';
-import ServerSettings from './auto/server-settings';
+import ServerSettingsController from './auto/server-settings-controller';
 import PanelController from './view/control-panel/controller';
 
 
@@ -22,7 +22,7 @@ function createInitialPanel() {
 
 app.on( 'ready', () => {
 	settingsGroup = new SettingsGroup([
-		ServerSettings
+		ServerSettingsController
 	]);
 
 	settingsGroup.read( ( error ) => {

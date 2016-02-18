@@ -27,3 +27,21 @@ Other Questions:
 - Should creating an APIPoller lead to creating an entry in both ServerPollerStore and ServerInfoStore?
 	- I don't see why not, they can both respond to the same action, and it's not like they actually depend on info from eachother.
 	- Additionally, since what record fields are available must be known somewhere, creating an initial record with default values is plenty doable.
+
+
+
+Store
+-----
+
+ServerInfoStore
+- Key: serverId
+	- info: ServerInfo - Composit info received by querying the APIs for a given server.
+
+APIWatcherStore: Just a set of serverIds that are being watched.  maybe more info should be stored than just what watchers exist?
+
+
+
+Actions
+-------
+
+Well, there'll be one kind of action for each API end point, which updates the stuff it updates.  Yup.

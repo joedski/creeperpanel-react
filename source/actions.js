@@ -7,6 +7,7 @@ type ServerFields = { id: string, title: string, key: string, secret: string };
 type ServerFieldsNoId = { title: string, key: string, secret: string };
 
 export type Action
+	// Adding/Removing servers
 	= {
 		type: 'mcpanel/add-server',
 		// server: ServerRecord
@@ -32,10 +33,18 @@ export type Action
 		// serverEntries: any
 		serverEntries: { [key: string]: ServerFields }
 	}
+	// Making servers do things
 	| {
 		type: 'mcpanel/power-server',
+		serverId: string,
 		powerAction: ('start' | 'restart' | 'stop')
 	}
+	| {
+		type: 'mcpanel/send-console-command',
+		serverId: string,
+		command: string
+	}
+	// Watching servers
 	| {
 		type: 'mcpanel/start-polling-api',
 		serverId: string
@@ -44,10 +53,17 @@ export type Action
 		type: 'mcpanel/stop-polling-api',
 		serverId: string
 	}
-	// | {
-	// 	type: 'mcpanel/send-console-command',
-	// 	command: string
-	// }
+	// Info about servers
+	| {
+		type: 'chapi/update-log',
+		serverId: string,
+		log: Array<any>
+	}
+	| {
+		type: 'chapi/update-players',
+		serverId: string,
+		log: Array<any>
+	}
 	// | {
 	// 	type: 'mcpanel/update-console-log',
 	// 	log: string

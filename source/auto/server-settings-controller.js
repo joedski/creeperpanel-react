@@ -7,30 +7,30 @@ import Immutable from 'immutable';
 
 import FluxStoreGroup from 'flux/lib/FluxStoreGroup';
 
-import electron, { BrowserWindow, ipcMain as ipc } from 'electron';
-
 import { dispatch } from '../dispatcher';
 import ServerStore from '../stores/server';
 import preferencesFile from '../preferences/file';
 
-export default function ServerSettings() {
+export default function ServerSettingsController() {
 	EventEmitter.call( this );
 	this.addStoreListeners();
 }
 
-inherits( ServerSettings, EventEmitter );
+inherits( ServerSettingsController, EventEmitter );
 
-Object.assign( ServerSettings, {
+Object.assign( ServerSettingsController, {
 	getStores() {
 		return [ ServerStore ];
 	},
 
-	getSettingsFile() {}
+	getSettingsFile() {
+		return 'servers.json';
+	}
 });
 
-Object.assign( ServerSettings.prototype, {
+Object.assign( ServerSettingsController.prototype, {
 	addStoreListeners() {
-		let stores = ServerSettings.getStores();
+		let stores = ServerSettingsController.getStores();
 		let changed = false;
 
 		let setChanged = () => { changed = true; };
@@ -59,7 +59,7 @@ Object.assign( ServerSettings.prototype, {
 	},
 
 	readSettings( next ) {
-		preferencesFile.read( 'servers.json', ( serversString ) => {
+		preferencesFile.read( ServerSettingsController.getSettingsFile(), ( serversString ) => {
 			let serversState;
 
 			if( serversString ) {
@@ -78,7 +78,7 @@ Object.assign( ServerSettings.prototype, {
 
 	writeSettings( next ) {
 		let serversString = JSON.stringify( this.computeState(), null, 2 );
-		preferencesFile.write( 'servers.json', serversString, next );
+		preferencesFile.write( ServerSettingsController.getSettingsFile(), serversString, next );
 	},
 
 	release() {
