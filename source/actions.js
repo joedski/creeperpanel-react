@@ -1,5 +1,8 @@
 // @flow weak
 
+// Actions are always specified using plain JS objects because
+// views have to pass through IPC.
+
 import Immutable from 'immutable';
 import type ServerRecord from 'records/server';
 
@@ -64,8 +67,4 @@ export type Action
 		serverId: string,
 		log: Array<any>
 	}
-	// | {
-	// 	type: 'mcpanel/update-console-log',
-	// 	log: string
-	// }
 	;
