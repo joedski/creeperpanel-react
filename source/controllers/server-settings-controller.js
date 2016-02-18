@@ -12,11 +12,11 @@ import ServerStore from '../stores/server';
 import preferencesFile from '../preferences/file';
 
 export default function ServerSettingsController() {
-	EventEmitter.call( this );
+	// EventEmitter.call( this );
 	this.addStoreListeners();
 }
 
-inherits( ServerSettingsController, EventEmitter );
+// inherits( ServerSettingsController, EventEmitter );
 
 Object.assign( ServerSettingsController, {
 	getStores() {
