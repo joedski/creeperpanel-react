@@ -30,6 +30,8 @@ TODO
 - Actually use Flow to do type checking.
 - Add some unit tests.
 - Rename `auto/` to `controllers/`, or something else that makes more sense.  It's basically where the viewless controllers are going, as opposed to the viewful controllers in `view/`
+- Deal with CHAPI errors better. (Currently APIWatcherController/APIWatcher just swallows them which is unhelpful.)
+- Blow out unused code.
 
 
 
