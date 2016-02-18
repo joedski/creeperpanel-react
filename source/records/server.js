@@ -1,3 +1,4 @@
+// @flow weak
 
 import Immutable from 'immutable';
 import uuid from 'uuid';

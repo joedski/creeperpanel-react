@@ -1,5 +1,5 @@
 
-// @flow
+// @flow weak
 
 import type { Action } from '../actions';
 import ServerRecord from '../records/server';

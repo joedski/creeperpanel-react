@@ -1,4 +1,4 @@
-
+// @flow weak
 import Immutable from 'immutable';
 
 const ServerRecordDefinition = Immutable.Record({

@@ -1,7 +1,7 @@
-// @flow
+// @flow weak
 
 import Immutable from 'immutable';
-// import type ServerRecord from 'records/server';
+import type ServerRecord from 'records/server';
 
 type ServerFields = { id: string, title: string, key: string, secret: string };
 type ServerFieldsNoId = { title: string, key: string, secret: string };

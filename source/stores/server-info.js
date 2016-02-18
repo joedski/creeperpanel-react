@@ -1,5 +1,5 @@
 
-// @flow
+// @flow weak
 
 import type { Action } from '../actions';
 import ServerInfoRecord from '../records/server-info';
@@ -25,7 +25,7 @@ class ServerStore extends ReduceStore<string, ServerInfoRecord> {
 			case 'mcpanel/remove-server': {
 				return state.delete( action.serverId );
 			}
-			
+
 			case 'mcpanel/start-polling-api': {
 				return state.set(
 					action.serverId,

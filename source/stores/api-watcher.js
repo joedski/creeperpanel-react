@@ -1,5 +1,5 @@
 
-// @flow
+// @flow weak
 
 import type { Action } from '../actions';
 

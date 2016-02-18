@@ -1,6 +1,6 @@
-
+// @flow weak
 import Dispatcher from 'flux/lib/Dispatcher';
-import type Action from './actions';
+import type { Action } from './actions';
 
 const instance :Dispatcher<Action> = new Dispatcher();
 export default instance;
