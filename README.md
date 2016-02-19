@@ -27,6 +27,10 @@ TODO
 - Actually use Flow to do type checking.
 - Add some unit tests.
 - Deal with CHAPI errors better. (Currently APIWatcherController/APIWatcher just swallows them which is unhelpful.)
+- Consider refactoring all requests to have representation in some Store so that other parts can display info about their status.
+	- This could also result in having only one API object per account actually sending requests.
+	- It also means rather than having separate stores for Console Commands and Server Power requests, there could be just one which stores API Requests.
+	- Could store the request payloads there, (or error messages) while the payloads would be stored elsewhere processed. (in ServerInfoStore etc.)
 
 
 
