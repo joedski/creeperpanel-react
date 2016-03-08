@@ -37,11 +37,14 @@
     "electron-prebuilt": "^0.36.7",
     "gulp": "^3.9.1",
     "gulp-babel": "^6.1.2",
+    "gulp-if": "^2.0.0",
     "gulp-jshint": "^2.0.0",
     "gulp-sass": "^2.2.0",
     "gulp-sourcemaps": "^1.6.0",
     "jshint": "^2.9.1",
     "jshint-stylish": "^2.1.0",
-    "streamqueue": "^1.1.1"
+    "pegjs": "^0.9.0",
+    "streamqueue": "^1.1.1",
+    "through2": "^2.0.1"
   }
 }
