@@ -67,6 +67,8 @@ const PendingCommandRecord = Immutable.Record({
 
 ////////
 
+// Getting things by server ID is done by selectors.
+
 function app( state :AppStateRecord = new AppStateRecord(), action ) {
 	switch( action.type ) {
 		case actions.CONFIG_RESPONSE: {
@@ -88,7 +90,7 @@ function panels( state :Immutable.List<PanelRecord> = Immutable.List(), action )
 	}
 }
 
-function apiAccounts( state :Immutable.Map<APIAccountId, APIAccountRecord> = Immutable.Map(), action ) {
+function apiAccounts( state :Immutable.List<APIAccountRecord> = Immutable.List(), action ) {
 	switch( action.type ) {
 		case actions.CONFIG_REQUEST: {
 			return state;
@@ -107,14 +109,14 @@ function apiAccounts( state :Immutable.Map<APIAccountId, APIAccountRecord> = Imm
 	}
 }
 
-function logs( state :Immutable.Map<APIAccountId, LogRecord> = Immutable.Map(), action ) {
+function logs( state :Immutable.List<LogRecord> = Immutable.List(), action ) {
 	switch( action.type ) {
 		default: return state;
 	}
 }
 
 // Is it better to use maps here?  Or selectors to create the maps?
-function playerLists( state :Immutable.Map<APIAccountId, List<PlayerRecord>> = Immutable.Map(), action ) {
+function playerLists( state :Immutable.List<PlayerRecord> = Immutable.List(), action ) {
 	switch( action.type ) {
 		default: return state;
 	}
