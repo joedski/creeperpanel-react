@@ -5,7 +5,7 @@ const getPendingCommands = ( state ) => state.get( 'pendingCommands' );
 
 const getPendingCommandsByServerId = createSelector(
 	[ getPendingCommands ],
-	( pendingCommands ) => pendingCommands.groupBy( ( pc ) => pc.get( 'serverId' ) )
+	( pendingCommands ) => pendingCommands.groupBy( ( pc ) => pc.get( 'apiAccountId' ) )
 );
 
 export default getPendingCommandsByServerId;

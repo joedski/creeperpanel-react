@@ -1,7 +1,18 @@
+// @flow weak
 
 import Immutable from 'immutable';
 import uuid from 'uuid';
 import actions from '../actions';
+
+
+
+////////
+
+type APIAccountId = string;
+
+
+
+////////
 
 const AppStateRecord = Immutable.Record({
 	// TODO: Should we worry if we can't read/write from the config dir?
@@ -22,20 +33,32 @@ const APIAccountRecord = Immutable.Record({
 });
 
 const PlayerRecord = Immutable.Record({
+	// This will probably end up being apiAccountId + name.
 	id: '',
-	serverId: '',
+	apiAccountId: '',
 	name: '',
 	style: '',
+	// Usually empty?
 	minecraftId: '',
 });
 
 const LogRecord = Immutable.Record({
-	serverId: '',
-	lines: Immutable.List()
+	apiAccountId: '',
+	// List<LogEntryRecord>
+	entries: Immutable.List()
+});
+
+const LogEntryRecord = Immutable.Record({
+	// Convert to actual time?  Problem is we only have HH:MM:SS, no date.
+	time: { hour: 0, minute: 0, second: 0 },
+	source: '',
+	severity: '',
+	// Array<string>
+	lines: []
 });
 
 const PendingCommandRecord = Immutable.Record({
-	serverId: '',
+	apiAccountId: '',
 	text: '',
 	sent: null,
 });
@@ -65,7 +88,7 @@ function panels( state :Immutable.List<PanelRecord> = Immutable.List(), action )
 	}
 }
 
-function apiAccounts( state :Immutable.Map<string, APIAccountRecord> = Immutable.Map(), action ) {
+function apiAccounts( state :Immutable.Map<APIAccountId, APIAccountRecord> = Immutable.Map(), action ) {
 	switch( action.type ) {
 		case actions.CONFIG_REQUEST: {
 			return state;
@@ -84,13 +107,14 @@ function apiAccounts( state :Immutable.Map<string, APIAccountRecord> = Immutable
 	}
 }
 
-function logs( state :Immutable.Map<string, LogRecord> = Immutable.Map(), action ) {
+function logs( state :Immutable.Map<APIAccountId, LogRecord> = Immutable.Map(), action ) {
 	switch( action.type ) {
 		default: return state;
 	}
 }
 
-function playerLists( state :Immutable.Map<string, List<PlayerRecord>> = Immutable.Map(), action ) {
+// Is it better to use maps here?  Or selectors to create the maps?
+function playerLists( state :Immutable.Map<APIAccountId, List<PlayerRecord>> = Immutable.Map(), action ) {
 	switch( action.type ) {
 		default: return state;
 	}

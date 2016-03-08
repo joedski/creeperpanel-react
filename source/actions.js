@@ -8,8 +8,8 @@ function action( type, payload, meta = {} ) {
 	};
 }
 
-function getAPI( state, serverId ) {
-	let server = state.getIn([ 'servers', serverId ]);
+function getAPI( state, apiAccountId ) {
+	let server = state.getIn([ 'servers', apiAccountId ]);
 	let key = server.get( 'key' );
 	let secret = server.get( 'secret' );
 
@@ -57,11 +57,11 @@ const configResponse = ( configOrError ) =>
 export const START_SERVER_PANEL = 'START_SERVER_PANEL';
 export const STOP_SERVER_PANEL = 'STOP_SERVER_PANEL';
 
-export const startServerPanel = ( serverId ) =>
-	action( START_SERVER_PANEL, null, { serverId } );
+export const startServerPanel = ( apiAccountId ) =>
+	action( START_SERVER_PANEL, null, { apiAccountId } );
 
-export const stopServerPanel = ( serverId ) =>
-	action( STOP_SERVER_PANEL, null, { serverId } );
+export const stopServerPanel = ( apiAccountId ) =>
+	action( STOP_SERVER_PANEL, null, { apiAccountId } );
 
 
 
@@ -71,32 +71,32 @@ export const stopServerPanel = ( serverId ) =>
 export const SERVER_LOG_REQUEST = 'SERVER_LOG_REQUEST';
 export const SERVER_LOG_RESPONSE = 'SERVER_LOG_RESPONSE';
 
-export const serverLogFetch = ( serverId ) => ( dispatch, getState ) => {
-	let api = getAPI( getState(), serverId );
+export const serverLogFetch = ( apiAccountId ) => ( dispatch, getState ) => {
+	let api = getAPI( getState(), apiAccountId );
 
-	dispatch( serverLogRequest( serverId ) );
+	dispatch( serverLogRequest( apiAccountId ) );
 
 	api.exec( 'minecraft', 'readconsole', {}, Aries.wrapCommonErrors( ( error, data, response, rawData ) => {
 		if( error ) {
-			return dispatch( serverLogResponse( serverId, error ) );
+			return dispatch( serverLogResponse( apiAccountId, error ) );
 		}
 
 		// Normalization...?
 		try {
-			return dispatch( serverLogResponse( serverId, consoleLogParser.parse( data.log ) ) );
+			return dispatch( serverLogResponse( apiAccountId, consoleLogParser.parse( data.log ) ) );
 		}
 		catch( parseError ) {
 			console.error( parseError );
-			return dispatch( serverLogResponse( serverId, parseError ) );
+			return dispatch( serverLogResponse( apiAccountId, parseError ) );
 		}
 	}));
 }
 
-const serverLogRequest = ( serverId ) =>
-	action( SERVER_LOG_REQUEST, null, { serverId });
+const serverLogRequest = ( apiAccountId ) =>
+	action( SERVER_LOG_REQUEST, null, { apiAccountId });
 
-const serverLogResponse = ( serverId, logOrError ) =>
-	action( SERVER_LOG_RESPONSE, logOrError, { serverId });
+const serverLogResponse = ( apiAccountId, logOrError ) =>
+	action( SERVER_LOG_RESPONSE, logOrError, { apiAccountId });
 
 
 
@@ -106,26 +106,26 @@ const serverLogResponse = ( serverId, logOrError ) =>
 export const SERVER_PLAYERS_REQUEST = 'SERVER_PLAYERS_REQUEST';
 export const SERVER_PLAYERS_RESPONSE = 'SERVER_PLAYERS_RESPONSE';
 
-export const serverPlayersFetch = ( serverId ) => ( dispatch, getState ) => {
-	let api = getAPI( getState(), serverId );
+export const serverPlayersFetch = ( apiAccountId ) => ( dispatch, getState ) => {
+	let api = getAPI( getState(), apiAccountId );
 
-	dispatch( serverPlayersRequest( serverId ) );
+	dispatch( serverPlayersRequest( apiAccountId ) );
 
 	api.exec( 'minecraft', 'players', {}, Aries.wrapCommonErrors( ( error, data, response, rawData ) => {
 		if( error ) {
-			return dispatch( serverPlayersResponse( serverId, error ) );
+			return dispatch( serverPlayersResponse( apiAccountId, error ) );
 		}
 
 		// Normalization...?
-		return dispatch( serverPlayersResponse( serverId, data.players, { method: data.method } ) );
+		return dispatch( serverPlayersResponse( apiAccountId, data.players, { method: data.method } ) );
 	}));
 }
 
-const serverPlayersRequest = ( serverId ) =>
-	action( SERVER_PLAYERS_REQUEST, null, { serverId });
+const serverPlayersRequest = ( apiAccountId ) =>
+	action( SERVER_PLAYERS_REQUEST, null, { apiAccountId });
 
-const serverPlayersResponse = ( serverId, playerListOrError, meta ) =>
-	action( SERVER_PLAYERS_RESPONSE, playerListOrError, { ...meta, serverId });
+const serverPlayersResponse = ( apiAccountId, playerListOrError, meta ) =>
+	action( SERVER_PLAYERS_RESPONSE, playerListOrError, { ...meta, apiAccountId });
 
 
 
@@ -136,30 +136,30 @@ const serverPlayersResponse = ( serverId, playerListOrError, meta ) =>
 export const SERVER_POWER_REQUEST = 'SERVER_POWER_REQUEST';
 export const SERVER_POWER_RESPONSE = 'SERVER_POWER_RESPONSE';
 
-const serverPowerAction = ( serverId, power ) => ( dispatch, getState ) => {
-	let api = getAPI( getState(), serverId );
+const serverPowerAction = ( apiAccountId, power ) => ( dispatch, getState ) => {
+	let api = getAPI( getState(), apiAccountId );
 
-	dispatch( serverPowerRequest( serverId ) );
+	dispatch( serverPowerRequest( apiAccountId ) );
 
 	api.exec( 'minecraft', power, {}, Aries.wrapCommonErrors( ( error, data, response, rawData ) => {
 		if( error ) {
-			return dispatch( serverPowerResponse( serverId, error ) );
+			return dispatch( serverPowerResponse( apiAccountId, error ) );
 		}
 
 		// Normalization...?
-		return dispatch( serverPowerResponse( serverId ) );
+		return dispatch( serverPowerResponse( apiAccountId ) );
 	}));
 }
 
-const serverPowerRequest = ( serverId ) =>
-	action( SERVER_POWER_REQUEST, null, { serverId });
+const serverPowerRequest = ( apiAccountId ) =>
+	action( SERVER_POWER_REQUEST, null, { apiAccountId });
 
-const serverPowerResponse = ( serverId, error ) =>
-	action( SERVER_POWER_RESPONSE, error, { serverId });
+const serverPowerResponse = ( apiAccountId, error ) =>
+	action( SERVER_POWER_RESPONSE, error, { apiAccountId });
 
-export const serverStart = ( serverId ) => serverPowerAction( serverId, 'startserver' );
-export const serverStop = ( serverId ) => serverPowerAction( serverId, 'stopserver' );
-export const serverRestart = ( serverId ) => serverPowerAction( serverId, 'restartserver' );
+export const serverStart = ( apiAccountId ) => serverPowerAction( apiAccountId, 'startserver' );
+export const serverStop = ( apiAccountId ) => serverPowerAction( apiAccountId, 'stopserver' );
+export const serverRestart = ( apiAccountId ) => serverPowerAction( apiAccountId, 'restartserver' );
 
 
 
@@ -173,24 +173,24 @@ export const SERVER_CONSOLE_COMMAND_RESPONSE = 'SERVER_CONSOLE_COMMAND_RESPONSE'
 
 let _commandId = 0;
 
-export const serverConsoleCommandSend = ( serverId, command ) => ( dispatch, getState ) => {
-	let api = getAPI( getState(), serverId );
+export const serverConsoleCommandSend = ( apiAccountId, command ) => ( dispatch, getState ) => {
+	let api = getAPI( getState(), apiAccountId );
 	let commandId = _commandId++;
 
-	dispatch( serverPowerRequest( serverId, command, { commandId }) );
+	dispatch( serverPowerRequest( apiAccountId, command, { commandId }) );
 
 	api.exec( 'minecraft', 'writeconsole', { command }, Aries.wrapCommonErrors( ( error, data, response, rawData ) => {
 		if( error ) {
-			return dispatch( serverPowerResponse( serverId, error, { commandId }) );
+			return dispatch( serverPowerResponse( apiAccountId, error, { commandId }) );
 		}
 
 		// Normalization...?
-		return dispatch( serverPowerResponse( serverId, null, { commandId }) );
+		return dispatch( serverPowerResponse( apiAccountId, null, { commandId }) );
 	}));
 }
 
-const serverConsoleCommandRequest = ( serverId, command, meta ) =>
-	action( SERVER_CONSOLE_COMMAND_REQUEST, command, { ...meta, serverId });
+const serverConsoleCommandRequest = ( apiAccountId, command, meta ) =>
+	action( SERVER_CONSOLE_COMMAND_REQUEST, command, { ...meta, apiAccountId });
 
-const serverConsoleCommandResponse = ( serverId, error, meta ) =>
-	action( SERVER_CONSOLE_COMMAND_RESPONSE, error, { ...meta, serverId });
+const serverConsoleCommandResponse = ( apiAccountId, error, meta ) =>
+	action( SERVER_CONSOLE_COMMAND_RESPONSE, error, { ...meta, apiAccountId });

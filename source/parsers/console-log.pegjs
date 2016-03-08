@@ -6,7 +6,8 @@ LogEntry
 	= logFirstLine:LogLineFirst logLines:(EOL LogLineContinuation)* EOL? {
 		return {
 			time: logFirstLine.time,
-			sourceSeverity: logFirstLine.sourceSeverity,
+			source: logFirstLine.sourceSeverity.source,
+			severity: logFirstLine.sourceSeverity.severity || '',
 			lines: [ logFirstLine.text ]
 				.concat(
 					logLines
