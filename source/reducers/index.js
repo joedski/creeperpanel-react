@@ -127,13 +127,26 @@ function pendingCommands( state :Immutable.List<PendingCommandRecord>, action ) 
 
 ////////
 
-export function creeperpanel( state = initialState, action ) {
-	return state.withMutations( s => s
-		.set( 'app', app( state.get( 'app', action ) ) )
-		.set( 'panels', panels( state.get( 'panels', action ) ) )
-		.set( 'servers', servers( state.get( 'servers', action ) ) )
-		.set( 'logs', logs( state.get( 'logs', action ) ) )
-		.set( 'playerLists', playerLists( state.get( 'playerLists', action ) ) )
-		.set( 'pendingCommands', pendingCommands( state.get( 'pendingCommands', action ) ) )
-	);
+function combineImmutableReducers( reducers, initialState ) {
+	let keys = Object.keys( reducers );
+
+	return ( state = initialState, action ) =>
+		state.withMutations( state =>
+			keys.reduce(
+				( state, key ) => state.set( key, reducers[ key ]( state.get( key ), action ) ),
+				state
+			)
+		);
 }
+
+// Note: If we use combineReducers from redux, we get a bunch of free error checking.
+// However it means the root atom would not be an Immutable thing of any sort.
+// It would have to be a POJO.  Oh well.
+
+// If I'm doing this, though, I should probably adopt combineReducers' strategy for initial state
+// by having each sub reducer return its own initial state.
+
+const creeperpanel = combineImmutableReducers(
+	{ app, panels, servers, tags, playerLists },
+	initialState
+);
