@@ -1,5 +1,4 @@
 
-import { createSelector } from 'reselect';
 import Immutable from 'immutable';
 import uuid from 'uuid';
 import actions from '../actions';
@@ -34,6 +33,7 @@ const LogRecord = Immutable.Record({
 });
 
 const PendingCommandRecord = Immutable.Record({
+	serverId: '',
 	text: '',
 	sent: null,
 });
@@ -122,13 +122,6 @@ function pendingCommands( state :Immutable.List<PendingCommandRecord>, action ) 
 		default: return state;
 	}
 }
-
-// Selectors: pendingCommands: Map<panelId, List<PendingCommandRecord>>
-const getPendingCommands = ( state ) => state.get( 'pendingCommands' );
-const getPendingCommandsByPanelId = createSelector(
-	[ getPendingCommands ],
-	( pendingCommands ) => pendingCommands.groupBy( ( pc ) => pc.get( 'panelId' ) )
-);
 
 
 
