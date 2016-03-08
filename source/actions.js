@@ -23,7 +23,7 @@ function getAPI( state, serverId ) {
 // Flux Standard Action says we should do THING_FETCH, THING_REQUEST, THING_RECEIVE
 // where THING_RECEIVE might have error:true.  If error:true, then payload is an Error.
 
-export const CONFIG_FETCH = 'CONFIG_FETCH';
+// export const CONFIG_FETCH = 'CONFIG_FETCH';
 export const CONFIG_REQUEST = 'CONFIG_REQUEST';
 export const CONFIG_RESPONSE = 'CONFIG_RESPONSE';
 
@@ -67,7 +67,7 @@ export const stopServerPanel = ( serverId ) =>
 
 ////////
 
-export const SERVER_LOG_FETCH = 'SERVER_LOG';
+// export const SERVER_LOG_FETCH = 'SERVER_LOG';
 export const SERVER_LOG_REQUEST = 'SERVER_LOG_REQUEST';
 export const SERVER_LOG_RESPONSE = 'SERVER_LOG_RESPONSE';
 
@@ -102,7 +102,7 @@ const serverLogResponse = ( serverId, logOrError ) =>
 
 ////////
 
-export const SERVER_PLAYERS_FETCH = 'SERVER_PLAYERS';
+// export const SERVER_PLAYERS_FETCH = 'SERVER_PLAYERS';
 export const SERVER_PLAYERS_REQUEST = 'SERVER_PLAYERS_REQUEST';
 export const SERVER_PLAYERS_RESPONSE = 'SERVER_PLAYERS_RESPONSE';
 
@@ -167,7 +167,7 @@ export const serverRestart = ( serverId ) => serverPowerAction( serverId, 'resta
 
 // Note: Commands may be sent before previous commands have received a server response.
 
-export const SERVER_CONSOLE_COMMAND_SEND = 'SERVER_CONSOLE_COMMAND_SEND';
+// export const SERVER_CONSOLE_COMMAND_SEND = 'SERVER_CONSOLE_COMMAND_SEND';
 export const SERVER_CONSOLE_COMMAND_REQUEST = 'SERVER_CONSOLE_COMMAND_REQUEST';
 export const SERVER_CONSOLE_COMMAND_RESPONSE = 'SERVER_CONSOLE_COMMAND_RESPONSE';
 
