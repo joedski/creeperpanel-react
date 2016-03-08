@@ -1,3 +1,4 @@
+import consoleLogParser from './parsers/console-log';
 import userDataFs from './user-data-fs';
 
 function action( type, payload, meta = {} ) {
@@ -5,6 +6,16 @@ function action( type, payload, meta = {} ) {
 		type, payload, meta,
 		error: (payload instanceof Error)
 	};
+}
+
+function getAPI( state, serverId ) {
+	let server = state.getIn([ 'servers', serverId ]);
+	let key = server.get( 'key' );
+	let secret = server.get( 'secret' );
+
+	let api = new Aries( key, secret );
+
+	return api;
 }
 
 ////////
@@ -61,21 +72,26 @@ export const SERVER_LOG_REQUEST = 'SERVER_LOG_REQUEST';
 export const SERVER_LOG_RESPONSE = 'SERVER_LOG_RESPONSE';
 
 export const serverLogFetch = ( serverId ) => ( dispatch, getState ) => {
-	let state = getState();
-	let server = state.servers.get( serverId );
-	let { key, secret } = server;
+	// let state = getState();
+	// let server = state.servers.get( 'serverId' );
+	// let { key, secret } = server;
 
-	let api = new Aries( key, secret );
+	let api = getAPI( getState(), serverId );
 
 	dispatch( serverLogRequest( serverId ) );
 
-	api.exec( 'minecraft', 'readconsole', {}, Aries.wrapCommonErrors( ( error, data, response, rawData ) => {
+	api.exec( 'minecraft', 'readconsole', { format: 0 }, Aries.wrapCommonErrors( ( error, data, response, rawData ) => {
 		if( error ) {
 			return dispatch( serverLogResponse( serverId, error ) );
 		}
 
 		// Normalization...?
-		return dispatch( serverLogResponse( serverId, data.log ) );
+		try {
+			return dispatch( serverLogResponse( serverId, consoleLogParser.parse( data.log ) ) );
+		}
+		catch( parseError ) {
+			console.error( parseError );
+		}
 	}));
 }
 
@@ -94,32 +110,90 @@ export const SERVER_PLAYERS_REQUEST = 'SERVER_PLAYERS_REQUEST';
 export const SERVER_PLAYERS_RESPONSE = 'SERVER_PLAYERS_RESPONSE';
 
 export const serverPlayersFetch = ( serverId ) => ( dispatch, getState ) => {
-	// 
+	let api = getAPI( getState(), serverId );
+
+	dispatch( serverPlayersRequest( serverId ) );
+
+	api.exec( 'minecraft', 'players', {}, Aries.wrapCommonErrors( ( error, data, response, rawData ) => {
+		if( error ) {
+			return dispatch( serverPlayersResponse( serverId, error ) );
+		}
+
+		// Normalization...?
+		return dispatch( serverPlayersResponse( serverId, data.players, { method: data.method } ) );
+	}));
 }
 
 const serverPlayersRequest = ( serverId ) =>
 	action( SERVER_PLAYERS_REQUEST, null, { serverId });
 
-const serverPlayersResponse = ( serverId, playerListOrError ) =>
-	action( SERVER_PLAYERS_RESPONSE, playerListOrError, { serverId });
+const serverPlayersResponse = ( serverId, playerListOrError, meta ) =>
+	action( SERVER_PLAYERS_RESPONSE, playerListOrError, { ...meta, serverId });
 
 
 
 ////////
 
+// Note: Only 1 power command should be running at any time for a given server.
+
 export const SERVER_POWER_REQUEST = 'SERVER_POWER_REQUEST';
 export const SERVER_POWER_RESPONSE = 'SERVER_POWER_RESPONSE';
 
 const serverPowerAction = ( serverId, power ) => ( dispatch, getState ) => {
-	// ...
+	let api = getAPI( getState(), serverId );
+
+	dispatch( serverPowerRequest( serverId ) );
+
+	api.exec( 'minecraft', power, {}, Aries.wrapCommonErrors( ( error, data, response, rawData ) => {
+		if( error ) {
+			return dispatch( serverPowerResponse( serverId, error ) );
+		}
+
+		// Normalization...?
+		return dispatch( serverPowerResponse( serverId ) );
+	}));
 }
 
 const serverPowerRequest = ( serverId ) =>
 	action( SERVER_POWER_REQUEST, null, { serverId });
 
-const serverPowerSuccess = ( serverId ) =>
-	action( SERVER_POWER_RESPONSE, null, { serverId });
+const serverPowerResponse = ( serverId, error ) =>
+	action( SERVER_POWER_RESPONSE, error, { serverId });
 
-export const serverStart = ( serverId ) => serverPowerAction( serverId, 'start' );
-export const serverStop = ( serverId ) => serverPowerAction( serverId, 'stop' );
-export const serverRestart = ( serverId ) => serverPowerAction( serverId, 'restart' );
+export const serverStart = ( serverId ) => serverPowerAction( serverId, 'startserver' );
+export const serverStop = ( serverId ) => serverPowerAction( serverId, 'stopserver' );
+export const serverRestart = ( serverId ) => serverPowerAction( serverId, 'restartserver' );
+
+
+
+////////
+
+// Note: Commands may be sent before previous commands have received a server response.
+
+export const SERVER_CONSOLE_COMMAND_SEND = 'SERVER_CONSOLE_COMMAND_SEND';
+export const SERVER_CONSOLE_COMMAND_REQUEST = 'SERVER_CONSOLE_COMMAND_REQUEST';
+export const SERVER_CONSOLE_COMMAND_RESPONSE = 'SERVER_CONSOLE_COMMAND_RESPONSE';
+
+let _commandId = 0;
+
+export const serverConsoleCommandSend = ( serverId, command ) => ( dispatch, getState ) => {
+	let api = getAPI( getState(), serverId );
+	let commandId = _commandId++;
+
+	dispatch( serverPowerRequest( serverId, command, { commandId }) );
+
+	api.exec( 'minecraft', 'writeconsole', { command }, Aries.wrapCommonErrors( ( error, data, response, rawData ) => {
+		if( error ) {
+			return dispatch( serverPowerResponse( serverId, error, { commandId }) );
+		}
+
+		// Normalization...?
+		return dispatch( serverPowerResponse( serverId, null, { commandId }) );
+	}));
+}
+
+const serverConsoleCommandRequest = ( serverId, command, meta ) =>
+	action( SERVER_CONSOLE_COMMAND_REQUEST, command, { ...meta, serverId });
+
+const serverConsoleCommandResponse = ( serverId, error, meta ) =>
+	action( SERVER_CONSOLE_COMMAND_RESPONSE, error, { ...meta, serverId });
