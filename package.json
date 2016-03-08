@@ -25,6 +25,8 @@
     "immutable": "^3.7.6",
     "react": "^0.14.7",
     "react-dom": "^0.14.7",
+    "react-redux": "^4.4.0",
+    "redux": "^3.3.1",
     "tick-tock": "^1.0.0",
     "uuid": "^2.0.1"
   },
