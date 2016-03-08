@@ -72,15 +72,11 @@ export const SERVER_LOG_REQUEST = 'SERVER_LOG_REQUEST';
 export const SERVER_LOG_RESPONSE = 'SERVER_LOG_RESPONSE';
 
 export const serverLogFetch = ( serverId ) => ( dispatch, getState ) => {
-	// let state = getState();
-	// let server = state.servers.get( 'serverId' );
-	// let { key, secret } = server;
-
 	let api = getAPI( getState(), serverId );
 
 	dispatch( serverLogRequest( serverId ) );
 
-	api.exec( 'minecraft', 'readconsole', { format: 0 }, Aries.wrapCommonErrors( ( error, data, response, rawData ) => {
+	api.exec( 'minecraft', 'readconsole', {}, Aries.wrapCommonErrors( ( error, data, response, rawData ) => {
 		if( error ) {
 			return dispatch( serverLogResponse( serverId, error ) );
 		}
@@ -91,6 +87,7 @@ export const serverLogFetch = ( serverId ) => ( dispatch, getState ) => {
 		}
 		catch( parseError ) {
 			console.error( parseError );
+			return dispatch( serverLogResponse( serverId, parseError ) );
 		}
 	}));
 }
