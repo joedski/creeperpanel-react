@@ -1,9 +1,13 @@
 var gulp = require( 'gulp' );
 var jshint = require( 'gulp-jshint' );
-// var gulpIf = require( 'gulp-if' );
+var gulpIf = require( 'gulp-if' );
 var sass = require( 'gulp-sass' );
 var babel = require( 'gulp-babel' );
 var sourcemaps = require( 'gulp-sourcemaps' );
+var gutil = require( 'gulp-util' );
+var PluginError = gutil.PluginError;
+var through = require( 'through2' );
+var PEG = require( 'pegjs' );
 
 
 
@@ -21,7 +25,10 @@ gulp.task( 'hint', () => {
 gulp.task( 'build', [ 'build-scripts', 'build-styles', 'build-assets' ]);
 
 function bableSources() {
-	return gulp.src([ 'source/**/*.{js,jsx,_js,_jsx}' ], { base: 'source' })
+	// Note: At the moment, somewhere in here doesn't overwrite or replace or whatever the pegjs file(s),
+	// resulting in them appearing in the output dir.
+	return gulp.src([ 'source/**/*.{js,jsx,_js,_jsx}', 'source/**/*.pegjs' ], { base: 'source' })
+		.pipe( gulpIf( /\.pegjs$/, pegjsTransform() ) )
 		.pipe( sourcemaps.init() )
 		.pipe( babel({
 			// 'stage-0' must go last.  or maybe last-array-position actually means first.  I dunno.
@@ -60,3 +67,43 @@ gulp.task( 'build-assets', () => {
 		.pipe( gulp.dest( 'app' ) )
 		;
 });
+
+
+
+////////
+
+const PEGJS_PLUGIN_NAME = 'gulp-pegjs-transform'
+
+function pegjsTransform( options ) {
+	options = Object.assign({}, {
+		output: 'source',
+		optimize: 'speed'
+	}, options );
+
+	return through.obj( function( file, encoding, cb ) {
+		// var newFile;
+
+		if( file.isNull() ) {
+			return cb( null, file );
+		}
+
+		if( file.isBuffer() ) {
+			file.extname = '.js';
+			file.contents = buildParser( file.contents, options );
+
+			return cb( null, file );
+		}
+
+		if( file.isStream() ) {
+			return cb( new PluginError( PEGJS_PLUGIN_NAME, "does not support streaming" ) );
+		}
+
+		return cb( new PluginError( PEGJS_PLUGIN_NAME, "does not unexpected file contents type" ) );
+	});
+}
+
+function buildParser( buffer, options ) {
+	var pegSource = buffer.toString();
+	var jsSource = PEG.buildParser( pegSource, options );
+	return new Buffer( `module.exports = ${ jsSource }` );
+}
