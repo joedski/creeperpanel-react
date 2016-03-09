@@ -12,8 +12,8 @@ LogEntry
 				.concat(
 					logLines
 						.map( function( item ) { return item[ 1 ].text; } )
-						.filter( function( text ) { return !! text; } )
 				)
+				.filter( function( text ) { return !! text; } )
 		};
 	}
 

@@ -40,6 +40,11 @@ export const configLoad = () => ( dispatch, getState ) => {
 
 		let config = configJSON ? JSON.parse( configJSON ) : {};
 
+		// Convert from legacy format.
+		if( (typeof config) != 'array' ) {
+			config = Object.keys( config ).map( ( key ) => config[ key ] );
+		}
+
 		return dispatch( configResponse( config ) );
 	});
 }
@@ -54,14 +59,22 @@ const configResponse = ( configOrError ) =>
 
 ////////
 
-export const START_SERVER_PANEL = 'START_SERVER_PANEL';
-export const STOP_SERVER_PANEL = 'STOP_SERVER_PANEL';
+export const OPEN_PANEL = 'OPEN_PANEL';
+export const CLOSE_PANEL = 'CLOSE_PANEL';
 
-export const startServerPanel = ( apiAccountId ) =>
-	action( START_SERVER_PANEL, null, { apiAccountId } );
+// Impure.
+let _panelId = 0;
 
-export const stopServerPanel = ( apiAccountId ) =>
-	action( STOP_SERVER_PANEL, null, { apiAccountId } );
+export const openPanel = () =>
+	action( OPEN_PANEL, { panelId: String( _panelId++ ) } );
+
+export const closePanel = ( panelId ) =>
+	action( CLOSE_PANEL, { panelId } );
+
+export const PANEL_API_ACCOUNT_SELECT = 'PANEL_API_ACCOUNT_SELECT';
+
+export const panelAPIAccountSelect = ( panelId, apiAccountId ) =>
+	action( PANEL_API_ACCOUNT_SELECT, { apiAccountId, panelId });
 
 
 
@@ -76,27 +89,39 @@ export const serverLogFetch = ( apiAccountId ) => ( dispatch, getState ) => {
 
 	dispatch( serverLogRequest( apiAccountId ) );
 
-	api.exec( 'minecraft', 'readconsole', {}, Aries.wrapCommonErrors( ( error, data, response, rawData ) => {
+	return api.exec( 'minecraft', 'readconsole', {}, Aries.wrapCommonErrors( ( error, data ) => {
 		if( error ) {
+			error.apiAccountId = apiAccountId;
 			return dispatch( serverLogResponse( apiAccountId, error ) );
 		}
 
-		// Normalization...?
 		try {
 			return dispatch( serverLogResponse( apiAccountId, consoleLogParser.parse( data.log ) ) );
 		}
 		catch( parseError ) {
 			console.error( parseError );
+			parseError.apiAccountId = apiAccountId;
+			parseError.logText = data.log;
 			return dispatch( serverLogResponse( apiAccountId, parseError ) );
 		}
 	}));
 }
 
 const serverLogRequest = ( apiAccountId ) =>
-	action( SERVER_LOG_REQUEST, null, { apiAccountId });
+	action( SERVER_LOG_REQUEST, { apiAccountId });
 
-const serverLogResponse = ( apiAccountId, logOrError ) =>
-	action( SERVER_LOG_RESPONSE, logOrError, { apiAccountId });
+const serverLogResponse = ( apiAccountId, logOrError ) => {
+	// This seems less predictable to me.
+	if( logOrError instanceof Error ) {
+		return action( SERVER_LOG_RESPONSE, logOrError );
+	}
+	else {
+		return action( SERVER_LOG_RESPONSE, {
+			log: logOrError,
+			apiAccountId
+		});
+	}
+}
 
 
 
@@ -111,8 +136,9 @@ export const serverPlayersFetch = ( apiAccountId ) => ( dispatch, getState ) => 
 
 	dispatch( serverPlayersRequest( apiAccountId ) );
 
-	api.exec( 'minecraft', 'players', {}, Aries.wrapCommonErrors( ( error, data, response, rawData ) => {
+	return api.exec( 'minecraft', 'players', {}, Aries.wrapCommonErrors( ( error, data ) => {
 		if( error ) {
+			error.apiAccountId = apiAccountId;
 			return dispatch( serverPlayersResponse( apiAccountId, error ) );
 		}
 
@@ -122,10 +148,18 @@ export const serverPlayersFetch = ( apiAccountId ) => ( dispatch, getState ) => 
 }
 
 const serverPlayersRequest = ( apiAccountId ) =>
-	action( SERVER_PLAYERS_REQUEST, null, { apiAccountId });
+	action( SERVER_PLAYERS_REQUEST, { apiAccountId });
 
-const serverPlayersResponse = ( apiAccountId, playerListOrError, meta ) =>
-	action( SERVER_PLAYERS_RESPONSE, playerListOrError, { ...meta, apiAccountId });
+const serverPlayersResponse = ( apiAccountId, playerListOrError, misc ) => {
+	if( playerListOrError instanceof Error ) {
+		return action( SERVER_PLAYERS_RESPONSE, playerListOrError );
+	}
+
+	return action( SERVER_PLAYERS_RESPONSE, {
+		...misc, apiAccountId,
+		players: playerListOrError
+	});
+}
 
 
 
@@ -141,8 +175,9 @@ const serverPowerAction = ( apiAccountId, power ) => ( dispatch, getState ) => {
 
 	dispatch( serverPowerRequest( apiAccountId ) );
 
-	api.exec( 'minecraft', power, {}, Aries.wrapCommonErrors( ( error, data, response, rawData ) => {
+	return api.exec( 'minecraft', power, {}, Aries.wrapCommonErrors( ( error, data ) => {
 		if( error ) {
+			error.apiAccountId = apiAccountId;
 			return dispatch( serverPowerResponse( apiAccountId, error ) );
 		}
 
@@ -154,8 +189,13 @@ const serverPowerAction = ( apiAccountId, power ) => ( dispatch, getState ) => {
 const serverPowerRequest = ( apiAccountId ) =>
 	action( SERVER_POWER_REQUEST, null, { apiAccountId });
 
-const serverPowerResponse = ( apiAccountId, error ) =>
-	action( SERVER_POWER_RESPONSE, error, { apiAccountId });
+const serverPowerResponse = ( apiAccountId, error ) => {
+	if( error ) {
+		return action( SERVER_POWER_RESPONSE, error );
+	}
+
+	return action( SERVER_POWER_RESPONSE, { apiAccountId });
+}
 
 export const serverStart = ( apiAccountId ) => serverPowerAction( apiAccountId, 'startserver' );
 export const serverStop = ( apiAccountId ) => serverPowerAction( apiAccountId, 'stopserver' );
@@ -177,20 +217,26 @@ export const serverConsoleCommandSend = ( apiAccountId, command ) => ( dispatch,
 	let api = getAPI( getState(), apiAccountId );
 	let commandId = _commandId++;
 
-	dispatch( serverPowerRequest( apiAccountId, command, { commandId }) );
+	dispatch( serverPowerRequest( apiAccountId, { text: command, commandId }) );
 
-	api.exec( 'minecraft', 'writeconsole', { command }, Aries.wrapCommonErrors( ( error, data, response, rawData ) => {
+	return api.exec( 'minecraft', 'writeconsole', { command }, Aries.wrapCommonErrors( ( error, data ) => {
 		if( error ) {
-			return dispatch( serverPowerResponse( apiAccountId, error, { commandId }) );
+			error.commandId = commandId;
+			error.apiAccountId = apiAccountId;
+			return dispatch( serverPowerResponse( apiAccountId, error ) );
 		}
 
-		// Normalization...?
-		return dispatch( serverPowerResponse( apiAccountId, null, { commandId }) );
+		return dispatch( serverPowerResponse( apiAccountId, { commandId }) );
 	}));
 }
 
-const serverConsoleCommandRequest = ( apiAccountId, command, meta ) =>
-	action( SERVER_CONSOLE_COMMAND_REQUEST, command, { ...meta, apiAccountId });
+const serverConsoleCommandRequest = ( apiAccountId, command ) =>
+	action( SERVER_CONSOLE_COMMAND_REQUEST, { ...command, apiAccountId });
 
-const serverConsoleCommandResponse = ( apiAccountId, error, meta ) =>
-	action( SERVER_CONSOLE_COMMAND_RESPONSE, error, { ...meta, apiAccountId });
+const serverConsoleCommandResponse = ( apiAccountId, errorOrCommand ) => {
+	if( errorOrCommand instanceof Error ) {
+		return action( SERVER_CONSOLE_COMMAND_RESPONSE, error );
+	}
+
+	return action( SERVER_CONSOLE_COMMAND_RESPONSE, { ...errorOrCommand, apiAccountId });
+}
